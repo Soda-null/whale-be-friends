@@ -11,6 +11,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from fish.spend import tier_of
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PERSONA_PATH = REPO_ROOT / "docs" / "persona_zh.md"
 
@@ -31,6 +33,7 @@ class Settings:
     # may she turn back to old chats' summaries (memory v3 step 8; on here on the memory-v3
     # branch, waiting for the user's approval: docs/memory_v3_zh.md §11 item 1)
     pages: bool = True
+    spend: str = "normal"  # spending tier, low / normal / high (decision 47)
     cottage: bool = False  # her lakeside cottage (decision 26); on in .env-less runs since the persona says so (28)
 
 
@@ -69,17 +72,19 @@ def load_settings(env_file: Path | None = None) -> Settings:
         # read "Asia/Shanghai" at all and would also fall back to UTC: there she keeps the
         # machine's own clock, which on a home PC is already the user's.
         del os.environ["TZ"]
+    tier = tier_of(os.environ.get("FISH_SPEND", ""))
     return Settings(
         api_key=os.environ.get("DEEPSEEK_API_KEY", ""),
         base_url=os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com"),
         model=os.environ.get("DEEPSEEK_MODEL", "deepseek-chat"),
         db_path=db_path,
         window_size=int(os.environ.get("FISH_WINDOW_SIZE", "20")),
-        prompt_chars=int(os.environ.get("FISH_PROMPT_CHARS", "6000")),
+        prompt_chars=int(os.environ.get("FISH_PROMPT_CHARS", str(tier.prompt_chars))),
         reach_out=os.environ.get("FISH_REACH_OUT", "1") not in ("0", "false", "no", ""),
-        reach_max_per_day=int(os.environ.get("FISH_REACH_MAX", "0")),
+        reach_max_per_day=int(os.environ.get("FISH_REACH_MAX", str(tier.reach_max_per_day))),
         leisure=os.environ.get("FISH_LEISURE", "1") not in ("0", "false", "no", ""),
-        leisure_max_per_day=int(os.environ.get("FISH_LEISURE_MAX", "3")),
+        leisure_max_per_day=int(os.environ.get("FISH_LEISURE_MAX", str(tier.leisure_max_per_day))),
+        spend=tier.name,
         home_at=os.environ.get("FISH_HOME", "").replace(" ", ""),
         pages=os.environ.get("FISH_PAGES", "1") not in ("0", "false", "no", ""),
         cottage=os.environ.get("FISH_COTTAGE", "1") not in ("0", "false", "no", ""),
