@@ -21,7 +21,7 @@ pastimes    what she follows in her free time (a book), and the free-moment log
 Never depends on the channels package.
 """
 
-from fish.memory.daychat import DAY_LIMIT, Block, DayChat, day_chat
+from fish.memory.daychat import DAY_LIMIT, Block, DayChat, day_chat, today_turns
 from fish.memory.daychat import fit as fit_day_chat
 from fish.memory.diary import Diary
 from fish.memory.episodes import Episode, EpisodeManager
@@ -44,7 +44,7 @@ from fish.memory.window import FOLD_BATCH, Turn, Window, first_message_at, he_wr
 
 __all__ = [
     "ABOUT_HIM_KINDS", "DAY_LIMIT", "DUE_SHOWN", "FOLD_BATCH", "KINDS", "PACT_LINK", "TRAITS", "BigramEmbedder", "Block", "DayChat",
-    "Diary", "Recollection", "Recollector", "day_chat", "first_message_at", "fit_day_chat", "he_wrote_between",
+    "Diary", "Recollection", "Recollector", "day_chat", "today_turns", "first_message_at", "fit_day_chat", "he_wrote_between",
     "last_his_message", "Embedder", "Episode", "EpisodeManager",
     "Followup", "Growth", "Memory", "MemoryStore", "Moment", "Page", "Pastime", "Pastimes", "Phase", "PhaseStore", "ProspectiveStore",
     "Recalled", "Relationship", "Sticker", "StickerAlbum", "TimeCued", "TraitStore", "Turn", "Window",

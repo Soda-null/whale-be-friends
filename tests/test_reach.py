@@ -210,3 +210,23 @@ def test_no_daily_cap_but_she_knows_he_has_not_answered(tmp_path):
     assert "你前面主动发的 3 条他还没回，最近一条是 1 小时前发的" in prompts[3]
     he_wrote(brain, NOON + timedelta(hours=4))
     assert ReachPolicy(conn).unanswered() == 0
+
+
+def test_reach_out_sees_everything_said_today_not_just_six_lines(tmp_path):
+    seen = []
+
+    def respond(messages, json_mode):
+        if "要不要先给他发条消息" in messages[-1]["content"]:
+            seen.append(messages[-1]["content"])
+            return json.dumps({"say": "嗯", "asked": [], "shared": []})
+        return json.dumps({"say": "嗯"})
+
+    conn, brain = make(tmp_path, FakeLLM(respond))
+    he_wrote(brain, NOON - timedelta(hours=9), "早上好")
+    brain.window.append("fish", "今天第七天了", "wechat", None, NOON - timedelta(hours=8))
+    for i in range(10):  # ten later lines push the first one far past the old six-line view
+        he_wrote(brain, NOON - timedelta(hours=7) + timedelta(minutes=i), f"闲聊{i}")
+    Relationship(conn).set("first_met", "2026-10-22")
+    brain.consider_reach_out(NOON)
+    assert seen and "04:00 你：今天第七天了" in seen[0]
+    assert "早上好" not in seen[0]  # 03:00 was before her day began

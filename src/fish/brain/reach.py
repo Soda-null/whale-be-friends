@@ -30,7 +30,7 @@ from fish.brain.parse import clean_say, texting
 from fish.brain.prompt import WEEKDAYS
 from fish.config import Settings, owner_words
 from fish.cottage import RoomNode, asleep_hours
-from fish.memory import Followup, Memory, Relationship, Window, iso, last_his_message
+from fish.memory import Followup, Memory, Relationship, Window, iso, last_his_message, today_turns
 from fish.mood import Mood, MoodStore
 from fish.msgs import SheSaid, TimePassed
 from fish.urges import Scene, Urge, about_him
@@ -243,7 +243,7 @@ class ReachNode:
             return None
         policy.record_considered(now)  # before asking, so a crash cannot loop on the model
         room = self.room.view(now, mood.hunger) if self.room is not None else ""
-        ro = Reacher(self.llm(), self.persona).decide(now, mood, trig, recent_lines(self.window), room)
+        ro = Reacher(self.llm(), self.persona).decide(now, mood, trig, recent_lines(self.window, now), room)
         if ro is None or self.room is None:
             return ro
         said, why = check_home(self.llm(), self.room.record(now), "", ro.text)
@@ -261,7 +261,8 @@ class ReachNode:
         ReachPolicy(self.conn).record_sent(m.now, ro)
 
 
-def recent_lines(window: Window, n: int = 6) -> list[str]:
-    turns = window.recent()[-n:]
+def recent_lines(window: Window, now: datetime) -> list[str]:
+    """Everything said since her day began, so she can see what she already told him today
+    (decision 50). One view of today's chat, kept in memory/daychat.py."""
     who = owner_words("他")
-    return [f"{who if t.role == 'user' else '你'}：{t.text}" for t in turns]
+    return [f"{t.ts[11:16]} {who if t.role == 'user' else '你'}：{t.text}" for t in today_turns(window, now)]

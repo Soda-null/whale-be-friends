@@ -75,3 +75,15 @@ def day_chat(window: Window, episodes: EpisodeManager, ep: Episode, now: datetim
     gists = {e.id: e.gist for e in episodes.closed() if e.id in ids}
     return fit(earlier, window.episode(ep.id), gists, ep.running_summary, limit)
 
+
+
+def today_turns(window: Window, now: datetime, limit: int = DAY_LIMIT) -> list[Turn]:
+    """Every turn since her day began, oldest first, in one flat list: for when she speaks first
+    and needs to see what she already said today, whichever chat it was in. Over `limit`
+    characters the oldest are dropped; the latest words always stay."""
+    turns = [t for _, t in window.since(datetime.combine(day_of(now), DAY_ENDS))]
+    total = sum(len(t.text) + TURN_OVERHEAD for t in turns)
+    while total > limit and len(turns) > KEEP_LATEST:
+        total -= len(turns[0].text) + TURN_OVERHEAD
+        turns = turns[1:]
+    return turns
