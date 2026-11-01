@@ -9,7 +9,7 @@
 大肥鱼是 DeepSeek 的网友拟人形象，懒，爱吃白饭。她以前是一条圆滚滚的蓝色胖鱼，现在是个蓝头发的鲸鱼娘，住在湖边一间小木屋里，用手机跟你聊天。这个项目把她做成一个**朋友**，不是助手：
 
 - **她记得你的事，也会忘。** 大事记得牢，小事过几周就模糊，你一提又"哦对你说过"。说错了你纠正，她会改口。
-- **她有自己的一天。** 每晚写日记、整理记忆；空闲时刷刷 B 站和新闻、读读书，看到好玩的会跟你说。她的小屋是真的：到点做饭、冰箱会空、碗会堆在水槽里、菜店周二关门，屋里的事她编不出来。
+- **她有自己的一天。** 每晚写日记、整理记忆；空闲时刷刷 B 站和新闻、读读书，看到好玩的会跟你说。她的小屋是真的：到点做饭、冰箱会空、碗会堆在水槽里、菜店周二关门，屋里的事她编不出来。窗台上有两个花盆，她自己种小葱、小白菜、小番茄，要浇水，不浇会蔫会死，摘下的能吃；你送她一条小金鱼，她会喂它、给它起名。有时她会想去门口湖边的小码头坐坐、去镇上花店买盆花摆窗台，去不去她自己挑。
 - **她有脾气。** 会困、会饿、会无聊；刚认识时话少，熟了会损你、翻旧账；性格会随着相处慢慢变一点点，但变不成别人。
 - **她在微信上和你聊。** 发图她看得懂，她也会回表情包；她想找你就会自己先发消息，没有次数上限。
 
@@ -51,7 +51,7 @@ bash ~/Dafeiyu/install.sh uninstall    # Windows：……\install.ps1 uninstall
 
 ## 要知道的几件事
 
-- **花钱：** 只有 DeepSeek 的 API 费用，按聊多少算，平常聊天很便宜；价格看 DeepSeek 官网。她每天自己上网、写日记也会用一点。
+- **花钱：** 只有 DeepSeek 的 API 费用，按聊多少算，平常聊天很便宜；价格看 DeepSeek 官网。她每天自己上网、写日记也会用一点。`.env` 里一行 `FISH_SPEND=low`（省）/ `normal`（默认）/ `high`（随便）就能调：每轮带多少记忆、一天几段空闲、一天先开口几次。
 - **隐私：** 聊天记录和她的记忆都在 `data/fish.db`，只在你的机器上。她发给 DeepSeek 的是每轮的提示词（包括她记得的你的事）。她"住哪"只精确到城市和街区，坐标四舍五入到约一公里，不存门牌号。
 - **微信通道：** 用的是腾讯官方 ClawBot 插件的协议（照它公开的源码写的客户端），不是腾讯承诺稳定的公开接口，以后可能要跟着改。她只回扫码的那个微信号，别人发消息她不理。微信偶尔会要求重新扫码：`cd ~/Dafeiyu && .venv/bin/python -m fish wechat login`。
 - **放在云服务器上：** 她会以为自己住在机房那个城市。在 `~/Dafeiyu/.env` 里加一行 `FISH_HOME=纬度,经度` 让她住到你想要的地方，然后 `install.sh update`。
@@ -64,16 +64,16 @@ bash ~/Dafeiyu/install.sh uninstall    # Windows：……\install.ps1 uninstall
 ```
 微信 ──> 电话线（channels）──> 大脑（brain）──> DeepSeek
                                  │
-              记忆（memory）、心情（mood）、人设（persona）、外面的世界（world）
+              记忆（memory）、心情（mood）、人设（persona）、外面的世界（world）、小屋（cottage）、念头（urges）
                                  │
                          data/fish.db（SQLite）
 
 每晚 03:30  夜间整理：写日记、合并重复的记忆、新事实取代旧的、每周反思、回到阶段的心情基线
-白天有空时  一天最多 3 段空闲，她自己挑：翻新闻、刷 B 站、读本老书、查个好奇的，或者什么都不干
+白天有空时  一天最多 3 段空闲，她自己挑：翻新闻、刷 B 站、读本老书、查个好奇的、去码头或花店，或者什么都不干
 每轮聊天    挑出相关的记忆 + 最近的对话 + 当下的心情 → 一次模型调用 → 回话、随手记、要惦记的事
 ```
 
-细节：[架构](docs/architecture_zh.md) · [记忆怎么设计的](docs/memory_design_zh.md)（遗忘曲线、想起来会记得更牢、夜里整理） · [她怎么上网](docs/world_design_zh.md) · [每个设计决定和原因](docs/decisions.md)。
+细节：[架构](docs/architecture_zh.md) · [记忆怎么设计的](docs/memory_design_zh.md)（遗忘曲线、想起来会记得更牢、夜里整理） · [她怎么上网](docs/world_design_zh.md) · [她的小屋](docs/cottage_design_zh.md) · [每个设计决定和原因](docs/decisions.md)。
 
 ## 想改代码
 
@@ -81,7 +81,7 @@ bash ~/Dafeiyu/install.sh uninstall    # Windows：……\install.ps1 uninstall
 
 1. [`AGENTS.md`](AGENTS.md) — 在这个仓库里干活的规矩（`CLAUDE.md` 是它的软链接）。
 2. [`STATUS.md`](STATUS.md) — 现状：做到哪、下一步。
-3. [`docs/architecture_zh.md`](docs/architecture_zh.md) — 七个模块、一条消息怎么流过去。
+3. [`docs/architecture_zh.md`](docs/architecture_zh.md) — 各个模块、一条消息怎么流过去。
 4. [`docs/README.md`](docs/README.md) — `docs/` 下每份文件是什么。
 
 ```bash
@@ -101,7 +101,7 @@ Dafeiyu/
 ├── AGENTS.md            规矩；CLAUDE.md -> AGENTS.md
 ├── STATUS.md            现状，唯一一处
 ├── docs/                架构、人设、决定账本、待定问题、术语表、日志
-├── src/fish/            代码：channels / persona / memory / mood / brain / routines / world / storage
+├── src/fish/            代码：channels / persona / memory / mood / brain / routines / world / cottage / urges / storage
 ├── tests/               测试
 ├── scripts/             小工具和服务文件
 ├── evals/               记忆体检的剧本和结果（编的朋友小周，不含真人）

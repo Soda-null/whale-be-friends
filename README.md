@@ -13,7 +13,7 @@ Meet **Dafeiyu** (大肥鱼, "big fat fish"): a fan-made character based on Deep
 This project makes her a **friend**, not an assistant:
 
 - **She remembers you, and she forgets.** Big things stick. Small things fade after a few weeks, until you bring them up: "oh right, you told me." If she gets something wrong and you correct her, she remembers the correction.
-- **She has a life of her own.** Every night she writes a diary and tidies her memories. In her free time she reads the news, scrolls Bilibili, reads an old book, or just does nothing. Her cottage is real in the program: she cooks at mealtimes, the fridge runs empty, dishes pile up in the sink, and the vegetable shop is closed on Tuesdays. She can't make up what happens at home.
+- **She has a life of her own.** Every night she writes a diary and tidies her memories. In her free time she reads the news, scrolls Bilibili, reads an old book, or just does nothing. Her cottage is real in the program: she cooks at mealtimes, the fridge runs empty, dishes pile up in the sink, and the vegetable shop is closed on Tuesdays. She can't make up what happens at home. On her windowsill she grows green onions, bok choy and tomatoes (water them, or they wilt and die; what she picks, she eats), and if you give her a goldfish she feeds it and names it. Sometimes she feels like walking to the little pier by the lake or buying a flower for the windowsill, and she decides for herself whether to go.
 - **She has moods.** She gets sleepy, hungry and bored. She is quiet when you first meet; once you are close she teases you and brings up old stories. Her personality drifts a little over months, but she never turns into someone else.
 - **She chats with you on WeChat.** She understands the pictures you send and sends stickers back. She texts you first whenever she feels like it; there is no daily limit.
 
@@ -58,7 +58,7 @@ bash ~/Dafeiyu/install.sh uninstall    # Windows: ...\install.ps1 uninstall
 
 ## Good to know
 
-- **Cost:** only the DeepSeek API, charged by use. Normal chatting is cheap; see DeepSeek's site for prices. Her own browsing and diary writing use a little too.
+- **Cost:** only the DeepSeek API, charged by use. Normal chatting is cheap; see DeepSeek's site for prices. Her own browsing and diary writing use a little too. One line in `.env` sets how much she spends: `FISH_SPEND=low`, `normal` (default) or `high` changes how much memory goes into each turn, how many free moments she gets a day and how often she texts first.
 - **Privacy:** your chats and her memories live in `data/fish.db`, on your machine only. What goes to DeepSeek is each turn's prompt, which includes what she remembers about you. Where she "lives" is stored only down to the city and neighbourhood; coordinates are rounded to about 1 km.
 - **WeChat:** the client follows the protocol of Tencent's official ClawBot plugin (written from its public source). It is not an API Tencent promises to keep stable, so it may need updates. She only answers the WeChat account that scanned the QR code. Now and then WeChat asks you to scan again: `./fish wechat login`.
 - **On a cloud server:** she will think she lives in the data center's city. Add `FISH_HOME=latitude,longitude` to `.env` to move her somewhere else, then run `install.sh update`.
@@ -71,14 +71,15 @@ bash ~/Dafeiyu/install.sh uninstall    # Windows: ...\install.ps1 uninstall
 ```
 WeChat ──> phone line (channels) ──> brain ──> DeepSeek
                                        │
-     memory, mood, persona, the world outside, her cottage
+     memory, mood, persona, the world outside, her cottage, urges
                                        │
                            data/fish.db (SQLite)
 
 03:30 every night   tidy-up: diary, merge repeated memories, newer facts replace older ones,
                     a weekly look back, mood drifts back to its baseline
 free time by day    up to 3 free moments a day; she picks: news, Bilibili, an old book,
-                    something she's curious about, a chore at home, or nothing at all
+                    something she's curious about, a chore at home, the pier, the
+                    flower shop, or nothing at all
 every chat turn     the memories that matter + recent messages + how she feels now
                     → one model call → her reply, quick notes, things to ask about later
 ```
@@ -112,7 +113,7 @@ Dafeiyu/
 ├── AGENTS.md            the rules; CLAUDE.md -> AGENTS.md
 ├── STATUS.md            the current state, in one place only
 ├── docs/                architecture, persona, decisions, open questions, glossary, daily logs
-├── src/fish/            the code: channels / persona / memory / mood / brain / routines / world / cottage / storage
+├── src/fish/            the code: channels / persona / memory / mood / brain / routines / world / cottage / urges / storage
 ├── tests/               tests
 ├── scripts/             small tools and service files
 ├── evals/               memory checkup scripts and results (made-up friends, no real people)
