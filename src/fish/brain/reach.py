@@ -78,6 +78,7 @@ class ReachOut:
     text: str
     asked: tuple[int, ...] = ()
     shared: tuple[int, ...] = ()
+    anniversary: int | None = None  # the day count she was told was an anniversary when she spoke
 
 
 class ReachPolicy:
@@ -136,6 +137,8 @@ class ReachPolicy:
         self.kv.set("reach_day", day, now)
         self.kv.set("reach_count", str(count), now)
         self.kv.set("reach_last_sent", iso(now), now)
+        if ro.anniversary is not None:
+            self.kv.set("reach_anniversary", str(ro.anniversary), now)
         if ro.shared:
             self.kv.set("reach_shared", json.dumps(sorted(self.shared_ids() | set(ro.shared))), now)
 
@@ -200,7 +203,7 @@ class Reacher:
         ok_shared = {m.id for m in trig.seen}
         asked = tuple(i for i in (data.get("asked") or []) if isinstance(i, int) and i in ok_asked)
         shared = tuple(i for i in (data.get("shared") or []) if isinstance(i, int) and i in ok_shared)
-        return ReachOut(say[:300], asked, shared)
+        return ReachOut(say[:300], asked, shared, trig.anniversary)
 
 
 def ago(hours: float) -> str:
@@ -248,7 +251,7 @@ class ReachNode:
             return ro
         if self.fixed is not None:
             self.fixed({"at": now.isoformat(timespec="minutes"), "why": why, "said": said, "first": True})
-        return ReachOut(said, ro.asked, ro.shared)
+        return ReachOut(said, ro.asked, ro.shared, ro.anniversary)
 
     def on_time(self, m: TimePassed) -> None:
         ro = self.consider(m.now)

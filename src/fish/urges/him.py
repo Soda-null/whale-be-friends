@@ -34,7 +34,10 @@ def silence(s: Scene) -> list[Urge]:
 
 
 def anniversary(s: Scene) -> list[Urge]:
-    known = Relationship(s.conn).days_known(s.now)
+    rel = Relationship(s.conn)
+    known = rel.days_known(s.now)
+    if rel.get("reach_anniversary") == str(known):  # she already said it on this day; once is enough
+        return []
     if known in ANNIVERSARIES or (known > 0 and known % 100 == 0):
         return [Urge(HIM, "anniversary", f"今天是你们认识的第 {known} 天", ref=known)]
     return []

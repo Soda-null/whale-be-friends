@@ -151,6 +151,19 @@ def test_boredom_and_anniversary_are_triggers(tmp_path):
     assert policy.triggers(NOON, MoodStore(conn).load()).anniversary == 7
 
 
+def test_anniversary_is_said_once_not_every_poll(tmp_path):
+    conn, brain = make(tmp_path, deciding(say="认识七天啦"))
+    he_wrote(brain, NOON - timedelta(hours=7))
+    Relationship(conn).set("first_met", "2026-10-22")  # day 7 today
+    out = brain.consider_reach_out(NOON)
+    assert out.anniversary == 7
+    ReachPolicy(conn).record_sent(NOON, out)
+    later = NOON + timedelta(hours=3)
+    assert ReachPolicy(conn).triggers(later, MoodStore(conn).load()).anniversary is None  # same day: not again
+    tomorrow = Relationship(conn).days_known(later + timedelta(days=1))
+    assert tomorrow == 8  # a new day count would be told fresh if it were an anniversary
+
+
 def test_wechat_channel_pushes_between_polls(tmp_path):
     class Client:
         def __init__(self):
