@@ -19,6 +19,8 @@ This project makes her a **friend**, not an assistant:
 - **She has moods.** She gets sleepy, hungry and bored. She is quiet when you first meet; once you are close she teases you and brings up old stories. Her personality drifts a little over months, but she never turns into someone else.
 - **She chats with you on WeChat.** She understands the pictures you send and sends stickers back. She texts you first whenever she feels like it; there is no daily limit.
 
+<img src="docs/images/life_en.webp" alt="Her little daily life: diary, white rice, flowers, goldfish" width="420">
+
 Her brain is the DeepSeek API (your own key, pay as you go). All her memories stay in one file on your own machine.
 
 **Good to know before you start:** she speaks Chinese, and her phone line is WeChat. Without WeChat you can still chat with her in a terminal.
@@ -72,6 +74,8 @@ bash ~/Dafeiyu/install.sh uninstall    # Windows: ...\install.ps1 uninstall
 
 <img src="docs/images/chat.webp" alt="She chats with you on WeChat from her little cottage" width="420">
 
+![How a message becomes a reply](docs/images/flow_en.webp)
+
 ```
 WeChat ──> phone line (channels) ──> brain ──> DeepSeek
                                        │
@@ -87,6 +91,10 @@ free time by day    up to 3 free moments a day; she picks: news, Bilibili, an ol
 every chat turn     the memories that matter + recent messages + how she feels now
                     → one model call → her reply, quick notes, things to ask about later
 ```
+
+![How she remembers and forgets](docs/images/memory_en.webp)
+
+![Her cottage is real in the program](docs/images/cottage_en.webp)
 
 The design docs are in Chinese: [architecture](docs/architecture_zh.md) · [how memory works](docs/memory_design_zh.md) (forgetting curve, remembering makes it stick, nightly tidy-up) · [how she goes online](docs/world_design_zh.md) · [her cottage](docs/cottage_design_zh.md) · [every design decision and why](docs/decisions.md).
 

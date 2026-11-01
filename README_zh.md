@@ -15,6 +15,8 @@
 - **她有脾气。** 会困、会饿、会无聊；刚认识时话少，熟了会损你、翻旧账；性格会随着相处慢慢变一点点，但变不成别人。
 - **她在微信上和你聊。** 发图她看得懂，她也会回表情包；她想找你就会自己先发消息，没有次数上限。
 
+<img src="docs/images/life_zh.webp" alt="她的小日子：写日记、想吃白饭、买花、喂小金鱼" width="420">
+
 她的脑子是 DeepSeek 的 API（你自己的 key，按量付费）。记忆全存在你自己机器上的一个文件里，不上传到任何地方。
 
 ## 一键养一条
@@ -65,6 +67,8 @@ bash ~/Dafeiyu/install.sh uninstall    # Windows：……\install.ps1 uninstall
 
 <img src="docs/images/chat.webp" alt="她在湖边小屋里用微信和你聊天" width="420">
 
+![一句话是怎么变成回复的](docs/images/flow_zh.webp)
+
 ```
 微信 ──> 电话线（channels）──> 大脑（brain）──> DeepSeek
                                  │
@@ -76,6 +80,10 @@ bash ~/Dafeiyu/install.sh uninstall    # Windows：……\install.ps1 uninstall
 白天有空时  一天最多 3 段空闲，她自己挑：翻新闻、刷 B 站、读本老书、查个好奇的、去码头或花店，或者什么都不干
 每轮聊天    挑出相关的记忆 + 最近的对话 + 当下的心情 → 一次模型调用 → 回话、随手记、要惦记的事
 ```
+
+![她怎么记事、怎么忘](docs/images/memory_zh.webp)
+
+![她的小屋是真的，屋里的事编不出来](docs/images/cottage_zh.webp)
 
 细节：[架构](docs/architecture_zh.md) · [记忆怎么设计的](docs/memory_design_zh.md)（遗忘曲线、想起来会记得更牢、夜里整理） · [她怎么上网](docs/world_design_zh.md) · [她的小屋](docs/cottage_design_zh.md) · [每个设计决定和原因](docs/decisions.md)。
 
