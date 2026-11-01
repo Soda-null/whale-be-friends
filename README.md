@@ -1,5 +1,7 @@
 # Whale Be Friends 🐋
 
+![Dafeiyu, a blue-haired whale girl, at the windowsill of her lakeside cottage](docs/images/cover.webp)
+
 **English** · [中文](README_zh.md)
 
 > **What:** The front door: what this is, how to get your own in one step, how she works, and where to start reading if you want to change the code.
@@ -67,6 +69,8 @@ bash ~/Dafeiyu/install.sh uninstall    # Windows: ...\install.ps1 uninstall
 - This is a small fan project. It has nothing to do with DeepSeek or Tencent.
 
 ## How she works
+
+<img src="docs/images/chat.webp" alt="She chats with you on WeChat from her little cottage" width="420">
 
 ```
 WeChat ──> phone line (channels) ──> brain ──> DeepSeek

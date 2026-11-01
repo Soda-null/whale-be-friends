@@ -1,5 +1,7 @@
 # Whale Be Friends：养一个记得你的 AI 朋友（大肥鱼）
 
+![大肥鱼趴在湖边小屋的窗台上玩手机](docs/images/cover.webp)
+
 [English](README.md) · **中文**
 
 > **是什么：** 仓库的大门：这是什么、怎么一键养一条、她怎么运作；想改代码的人从哪读起。
@@ -60,6 +62,8 @@ bash ~/Dafeiyu/install.sh uninstall    # Windows：……\install.ps1 uninstall
 - 这是粉丝做的小项目，和 DeepSeek、腾讯都没有关系。
 
 ## 她是怎么运作的
+
+<img src="docs/images/chat.webp" alt="她在湖边小屋里用微信和你聊天" width="420">
 
 ```
 微信 ──> 电话线（channels）──> 大脑（brain）──> DeepSeek
