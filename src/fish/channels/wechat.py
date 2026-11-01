@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import time
+from datetime import datetime
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Callable
@@ -31,6 +32,8 @@ def bubble_pause(bubble: str) -> float:
 # People split one thought over several messages ("...麦当劳这种路上的" / "店"). After a
 # message arrives she waits a moment for the rest before answering the whole of it.
 FRAGMENT_PEEKS, FRAGMENT_PEEK_SECONDS = 2, 2.5
+# Messages that waited longer than this (she was offline) are told apart from live ones.
+STALE_AFTER_SECONDS = 600
 # Community reports (weilink docs): each context_token allows about 10 bot messages, and bot
 # messages to someone silent for 24 h are dropped without an error. We stay well under.
 TOKEN_QUOTA = 8
@@ -62,6 +65,31 @@ class WeChatState:
 
 
 SHORT_FRAGMENT = 4
+
+
+def sent_at(msg: dict) -> float | None:
+    """When he sent it, as epoch seconds, if the message says (create_time_ms, else create_time)."""
+    ms = msg.get("create_time_ms")
+    if isinstance(ms, (int, float)) and ms > 0:
+        return ms / 1000
+    sec = msg.get("create_time")
+    if isinstance(sec, (int, float)) and sec > 0:
+        return sec / 1000 if sec > 1e11 else float(sec)
+    return None
+
+
+def split_stale(msgs: list[dict], now: float) -> tuple[list[dict], list[dict]]:
+    """(stale, live): stale ones were sent long ago, while she was not listening."""
+    stale = [m for m in msgs if (t := sent_at(m)) is not None and now - t > STALE_AFTER_SECONDS]
+    return stale, [m for m in msgs if m not in stale]
+
+
+def backlog_note(stale: list[dict]) -> str:
+    times = sorted(t for m in stale if (t := sent_at(m)) is not None)
+    span = datetime.fromtimestamp(times[0]).strftime("%H:%M")
+    if len(times) > 1:
+        span += "–" + datetime.fromtimestamp(times[-1]).strftime("%H:%M")
+    return f"（你没在线的时候他攒下的话，发于 {span}，不是刚说的，不用逐句回）"
 
 
 def join_fragments(parts: list[str]) -> str:
@@ -289,7 +317,9 @@ class WeChatChannel:
         accepted = [m for m in msgs if self._accept(m)]
         if not accepted:
             return False
+        stale, _ = split_stale(accepted, time.time())
         texts: list[str] = []
+        old_texts: list[str] = []
         image: bytes | None = None
         shared: SharedFile | None = None
         for msg in accepted:
@@ -308,8 +338,10 @@ class WeChatChannel:
                     self.out(f"（他发的文件没取到：{e}）")
             text = text_of(msg)
             if text and not (item is not None and text == "[图片]" and image is not None):
-                texts.append(text)
+                (old_texts if msg in stale else texts).append(text)
         text = join_fragments(texts)
+        if old_texts:
+            text = backlog_note(stale) + join_fragments(old_texts) + ("\n（现在）" + text if text else "")
         if not text and image is None and shared is None:
             return False
         sender = self.state.user_id
