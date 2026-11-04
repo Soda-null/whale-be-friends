@@ -58,7 +58,7 @@ def test_the_reminder_names_json_and_shows_every_field_she_writes():
     """DeepSeek's JSON mode wants the word json and an example of the object in the prompt."""
     assert "json" in JSON_REMINDER
     example = json.loads(JSON_REMINDER[JSON_REMINDER.index("{"):JSON_REMINDER.rindex("}") + 1])
-    assert set(example) == {"say", "mood", "topic", "notes", "followups", "asked", "corrections"}
+    assert set(example) == {"say", "mood", "topic", "he_doing", "notes", "followups", "asked", "corrections"}
 
 
 def test_a_picture_keeps_its_own_reminder_and_gets_no_second_one(tmp_path):

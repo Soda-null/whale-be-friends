@@ -20,13 +20,16 @@ WEEKDAYS = "一二三四五六日"
 # "{" or whitespace. A reminder with a one-line example right at his line fixed it; the same words in
 # the system prompt did not (docs/memory_v3_zh.md §15). Only in the prompt, never in what is stored.
 # Placeholders, not words: an example with real values ("闲聊") got copied, and a repeated
-# topic makes her bored turn after turn (mood.after_turn).
+# topic makes her bored turn after turn (mood.after_turn). he_doing is in the example for the same
+# reason as the sticker below: the first trial of decision 51 left it out and "躺到你沙发上" was not kept.
 JSON_REMINDER = ('（照"输出格式"只输出一个 json 对象，例如 {"say": "你要说的话", "mood": "你此刻的心情", '
-                 '"topic": "这轮聊的事", "notes": [], "followups": [], "asked": [], "corrections": []}）')
+                 '"topic": "这轮聊的事", "he_doing": "他自己说他这会儿在干嘛，没说就空", "notes": [], "followups": [], '
+                 '"asked": [], "corrections": []}）')
 # With an album the example shows the sticker field too: the model copies the example at the end
 # of his line, and without the field it never sent one (10-28 trial: 0 stickers in 16 replies).
 JSON_REMINDER_STICKERS = ('（照"输出格式"只输出一个 json 对象，例如 {"say": "你要说的话", "mood": "你此刻的心情", '
-                          '"topic": "这轮聊的事", "notes": [], "followups": [], "asked": [], "corrections": [], '
+                          '"topic": "这轮聊的事", "he_doing": "他自己说他这会儿在干嘛，没说就空", "notes": [], '
+                          '"followups": [], "asked": [], "corrections": [], '
                           '"sticker": 0}；想发表情包就把 0 换成它的编号）')
 REMINDERS = (JSON_REMINDER_STICKERS, JSON_REMINDER)
 

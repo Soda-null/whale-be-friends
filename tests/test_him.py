@@ -79,6 +79,8 @@ def test_what_he_is_up_to_goes_stale_and_ends_when_he_moves(tmp_path):
     c = home(tmp_path)
     c.he_is_doing("在图书馆", MON)
     assert "在干嘛：在图书馆（18:00 他说的）" in c.him_status(MON + timedelta(hours=1)).text
+    c.he_is_doing("在图书馆", MON + timedelta(hours=1))  # her reply copied it back: he did not say it again
+    assert "（18:00 他说的）" in c.him_status(MON + timedelta(hours=1)).text
     assert "在干嘛" not in c.him_status(MON + timedelta(hours=3)).text  # noon's library says nothing about tonight
     c.expect(MON + timedelta(minutes=30))  # he came over: he is not in the library now
     assert "在干嘛" not in c.him_status(MON + timedelta(minutes=31)).text
@@ -143,6 +145,22 @@ def test_her_reply_keeps_what_he_says_he_is_up_to(tmp_path):
     brain.respond("（推门进来，躺到沙发上）", now=MON)
     brain.respond("真舒服", now=MON + timedelta(minutes=1))
     assert "在干嘛：躺在沙发上（18:00 他说的）" in prompts[-1][0]["content"]
+
+
+def test_going_home_is_not_kept_as_what_he_is_up_to(tmp_path):
+    """First trial with the real model: "要回去了" stayed under his status after he had left, and
+    still said so when he was back at school."""
+    brain, prompts = make_brain(tmp_path, {"say": "进来吧", "guest": "arrive"}, {"say": "慢点", "guest": "leave", "he_doing": "要回去了"},
+                                {"say": "嗯", "guest": "arrive"}, {"say": "慢点", "he_doing": "要走了"},
+                                {"say": "好", "he_doing": "到学校了"})
+    brain.respond("我进来了", now=MON)
+    brain.respond("我走了", now=MON + timedelta(minutes=10))  # she says he went
+    assert "在干嘛" not in brain.room.him(MON + timedelta(minutes=11)).text
+    brain.respond("我又来了", now=MON + timedelta(minutes=20))
+    brain.respond("我先回去了", now=MON + timedelta(minutes=30))  # her reply forgets; his words say he went
+    assert "在干嘛" not in brain.room.him(MON + timedelta(minutes=31)).text
+    brain.respond("到学校了", now=MON + timedelta(minutes=50))  # away, it is just what he is up to
+    assert "在干嘛：到学校了" in brain.room.him(MON + timedelta(minutes=51)).text
 
 
 def test_a_broken_room_file_leaves_his_status_out(tmp_path):

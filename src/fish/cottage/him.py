@@ -29,8 +29,9 @@ class HimMixin:
         """What he says he is up to. Not a line in the room's record: it is not something that
         happened in her house, and her reasons to text him listen to that record."""
         what = what.strip()[:DOING_CHARS]
-        if what:
-            room = self.load(now)
+        room = self.load(now)
+        # the model copies it back from her prompt each turn: that is not him saying it again
+        if what and what != room.him.get("doing"):
             room.him = {"doing": what, "at": _iso(now)}
             self.save(room)
 
