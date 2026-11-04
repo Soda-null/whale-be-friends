@@ -9,6 +9,7 @@
 - 代码 `~/Dafeiyu`（box 上），由 Mac `git push box main` 直接更新工作区（和 Yaqi 仓库同一招：`receive.denyCurrentBranch updateInstead`）。
 - 记忆 `~/Dafeiyu/data/fish.db`、微信凭证 `data/wechat.json`、密钥 `.env`：**都在 box 上，box 上的才是真的**。Mac 上 `data/` 是搬家那天的旧拷贝，别再在 Mac 上跑 `fish wechat`（两边同时收微信消息会互相抢）。
 - 两个 systemd 用户单元：`dafeiyu-wechat.service`（一直跑；她的空闲时间、天气也在这里面）、`dafeiyu-nightly.timer`（每天 03:30 跑 `fish nightly`）。原来每天 09:30 的 `dafeiyu-browse.timer` 决定 24 撤了，部署脚本会把旧的停掉删掉。时区跟 Mac 一样（部署脚本从 Mac 读，写进 `tz.conf`），所以她的"深夜"和"上午"都是用户的，不是 box 的。
+- 同一个微信只能连一条她（决定 49、52）：Mac 的 `.env` 里有 `BOX=`，所以 Mac 上 `fish wechat` 会直接拒绝；box 上第二条会被 `data/wechat.lock` 拦下。box 的 `.env` 里不能有 `BOX=`，`--with-data` 时脚本会删掉它。
 
 ## 1. 常用命令（都在 Mac 上敲）
 

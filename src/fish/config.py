@@ -34,6 +34,7 @@ class Settings:
     # branch, waiting for the user's approval: docs/memory_v3_zh.md §11 item 1)
     pages: bool = True
     spend: str = "normal"  # spending tier, low / normal / high (decision 47)
+    box: str = ""  # BOX= in .env: she lives on that machine and this one only looks in (decision 52)
     cottage: bool = False  # her lakeside cottage (decision 26); on in .env-less runs since the persona says so (28)
 
 
@@ -88,4 +89,5 @@ def load_settings(env_file: Path | None = None) -> Settings:
         home_at=os.environ.get("FISH_HOME", "").replace(" ", ""),
         pages=os.environ.get("FISH_PAGES", "1") not in ("0", "false", "no", ""),
         cottage=os.environ.get("FISH_COTTAGE", "1") not in ("0", "false", "no", ""),
+        box=os.environ.get("BOX", "").strip(),
     )

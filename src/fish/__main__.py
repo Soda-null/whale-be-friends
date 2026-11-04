@@ -26,7 +26,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from fish.brain import Brain, DeepSeekLLM, home_command
-from fish.channels import ILinkClient, TerminalChannel, WeChatChannel, WeChatState, login
+from fish.channels import ILinkClient, SecondHer, TerminalChannel, WeChatChannel, WeChatState, hold_the_line, login
 from fish.channels.wechat import STATE_FILE
 from fish.config import REPO_ROOT, Settings, load_settings, owner_words
 from fish.cottage import Cottage
@@ -216,6 +216,11 @@ def main(argv: list[str] | None = None) -> None:
         ap.error(f"unexpected argument: {' '.join(args.rest)}")
 
     settings = load_settings()
+    if args.command == "wechat":  # before anything else touches her or the line (decision 52)
+        try:
+            line = hold_the_line(settings.box, WECHAT_STATE.with_suffix(".lock"))  # noqa: F841 (kept while she runs)
+        except SecondHer as e:
+            raise SystemExit(str(e))
     if args.command == "cottage":
         cottage(settings, args.subcommand, args.rest)
         return

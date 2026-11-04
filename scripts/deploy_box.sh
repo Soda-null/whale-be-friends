@@ -27,6 +27,13 @@ if [ -n "$(git status --porcelain)" ]; then
     echo "working tree is dirty; commit first (the box gets what is committed)" >&2
     exit 1
 fi
+# She lives on the box: one still running here would answer him too (decisions 49, 52). A check for
+# one started before `fish wechat` refused to run on this machine, or by hand with BOX= taken out.
+if pgrep -f '[p]ython.* -m fish wechat' >/dev/null; then
+    echo "a WeChat instance of her is running on THIS machine; stop it first (decision 49):" >&2
+    pgrep -fl '[p]ython.* -m fish wechat' >&2
+    exit 1
+fi
 if ! .venv/bin/python -m pytest -q >/dev/null 2>&1; then
     echo "tests fail here; not deploying (run .venv/bin/python -m pytest -q)" >&2
     exit 1
@@ -59,6 +66,7 @@ echo "installed; TZ=$MAC_TZ"
 if [ "$WITH_DATA" = 1 ]; then
     ssh "$BOX" "systemctl --user stop dafeiyu-wechat.service 2>/dev/null || true"
     rsync -az .env "$BOX:$REMOTE_DIR/.env"
+    ssh "$BOX" "sed -i '/^BOX=/d' $REMOTE_DIR/.env"  # BOX= means "she lives elsewhere": not true over there (decision 52)
     rsync -az --delete data/ "$BOX:$REMOTE_DIR/data/"
     echo "copied .env and data/"
 fi
