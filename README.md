@@ -51,6 +51,7 @@ Everyday commands, run inside the `Dafeiyu` folder (on Windows, type `.\fish.cmd
 ./fish show                 # what she remembers about you, her mood, how close you two are
 ./fish                      # chat in the terminal instead of WeChat
 ./fish cottage put 鸡蛋      # put something in her fridge (here: eggs)
+./fish me                  # how she sees you right now; add words to say what you are up to
 ```
 
 Update (new code, restart, memories untouched) and stop (memories stay in `data/`):

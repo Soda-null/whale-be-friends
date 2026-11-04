@@ -22,6 +22,7 @@ from fish.cottage.drawer import DrawerMixin
 from fish.cottage.florist import FloristMixin
 from fish.cottage.garden import GardenMixin
 from fish.cottage.guest import GuestMixin
+from fish.cottage.him import HimMixin
 from fish.cottage.lake import LakeMixin
 from fish.cottage.rules import (ACTIONS, ATE_RECENTLY_HOURS, ENERGY_PER_HOUR, HUNGER_PER_HOUR, HUNGRY, SLEEP_FROM,
                                 WAKE_AT, asleep_hours, mealtime)
@@ -57,8 +58,8 @@ def _awake_hours(last: datetime, now: datetime) -> float:
     return awake / 3600
 
 
-class Cottage(ActionsMixin, ShopMixin, VisitorMixin, DrawerMixin, GuestMixin, GardenMixin, TankMixin, LakeMixin,
-              FloristMixin):
+class Cottage(ActionsMixin, ShopMixin, VisitorMixin, DrawerMixin, GuestMixin, HimMixin, GardenMixin, TankMixin,
+              LakeMixin, FloristMixin):
     put_in = staticmethod(put_in)  # into the fridge (state.py), kept here for old callers
 
     def __init__(self, path: Path) -> None:
@@ -191,7 +192,8 @@ class Cottage(ActionsMixin, ShopMixin, VisitorMixin, DrawerMixin, GuestMixin, Ga
         if not room.doing:
             return ""
         if room.doing == "睡觉":
-            return owner_words("你在睡觉，被他的消息吵醒了") if chatting else "你在睡觉"
+            woken = "你在睡觉，被他叫醒了" if room.guest.get("here") else "你在睡觉，被他的消息吵醒了"
+            return owner_words(woken) if chatting else "你在睡觉"
         if room.doing == ACTIONS["shop"].doing:
             return ShopMixin.trip_line(room, now)
         if room.doing == ACTIONS["florist"].doing:
@@ -208,7 +210,7 @@ class Cottage(ActionsMixin, ShopMixin, VisitorMixin, DrawerMixin, GuestMixin, Ga
         that matter now, and what happened at home today."""
         room = self.load(now)
         all_lines = self.lines(room)
-        wanted = ["guest"] if room.guest else []
+        wanted = []  # him, here or coming, has his own place in the prompt (him.py)
         if hunger >= HUNGRY or mealtime(now) or not room.fridge or room.rice < 4:
             wanted.append("food")
         if len(room.sink) >= 2:

@@ -44,6 +44,7 @@ irm https://raw.githubusercontent.com/Soda-null/whale-be-friends/main/install.ps
 ./fish show     # 她记了你什么、心情、关系
 ./fish          # 不接微信，在终端里和她聊
 ./fish cottage put 鸡蛋   # 往她冰箱里放点吃的
+./fish me               # 看她眼里你现在的状态；后面加字就是告诉她你在干嘛
 ```
 
 更新（拉新代码、重启她，记忆不动）和停掉她（记忆留在 `data/`）：

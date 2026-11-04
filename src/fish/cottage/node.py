@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 
 from fish.bus import Bus
 from fish.cottage.room import Cottage
-from fish.msgs import HomeEvent, MoodMoved, SheAte, SheSlept, TimePassed
+from fish.msgs import HisStatus, HomeEvent, MoodMoved, SheAte, SheSlept, TimePassed
 
 
 def _at(now: datetime, hhmm: str) -> datetime | None:
@@ -92,6 +92,19 @@ class RoomNode:
             return self.cottage.guest_here(self.cottage.load(now), now)
         except ValueError:
             return False
+
+    def him(self, now: datetime) -> HisStatus:
+        """Him as she sees him right now (decision 51); nothing known when the file is broken."""
+        try:
+            return self.cottage.him_status(now)
+        except ValueError:
+            return HisStatus()
+
+    def he_is_doing(self, what: str, now: datetime) -> None:
+        try:
+            self.cottage.he_is_doing(what, now)
+        except ValueError:
+            pass
 
     def visit(self, what: str, now: datetime, since: str = "", until: str = "", why: str = "") -> str | None:
         """His comings and goings, from a chat ("arrive" / "leave") or his plain words. Times are

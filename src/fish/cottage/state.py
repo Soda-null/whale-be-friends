@@ -42,6 +42,7 @@ class Room:
     ate: str = ""  # when she last ate
     pending: dict = field(default_factory=dict)  # what comes at `until`: a meal ({"hunger", "line"}), the shopping ({"buy"}), the pier ({"lake"}), the flower shop ({"florist"})
     guest: dict = field(default_factory=dict)  # him at her place: {"since", "until", "why", "here"} (decision 41)
+    him: dict = field(default_factory=dict)  # what he says he is up to: {"doing", "at"} (decision 51)
     pots: list[dict] = field(default_factory=lambda: [{} for _ in range(POTS)])  # her windowsill pots (decision 42)
     grew: str = ""  # the last morning the pots grew
     tank: dict = field(default_factory=dict)  # her goldfish: {"name", "since", "from", "fed", "water"} (decision 43)

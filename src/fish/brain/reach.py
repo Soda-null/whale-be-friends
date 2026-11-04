@@ -242,7 +242,9 @@ class ReachNode:
         if not trig.any:
             return None
         policy.record_considered(now)  # before asking, so a crash cannot loop on the model
-        room = self.room.view(now, mood.hunger) if self.room is not None else ""
+        room = ""
+        if self.room is not None:
+            room = "\n".join(x for x in (self.room.him(now).text, self.room.view(now, mood.hunger)) if x)
         ro = Reacher(self.llm(), self.persona).decide(now, mood, trig, recent_lines(self.window, now), room)
         if ro is None or self.room is None:
             return ro

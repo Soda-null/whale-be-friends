@@ -133,6 +133,7 @@ class Reply:
     guest_since: str = ""  # "HH:MM" when he comes later today
     guest_until: str = ""  # "HH:MM" when he says he will go
     guest_why: str = ""  # what he comes for ("吃晚饭")
+    he_doing: str = ""  # what he says he is up to right now (decision 51)
     parsed: bool = True
 
 
@@ -279,6 +280,7 @@ def parse_reply(raw: str) -> Reply:
         guest_since=str(data.get("guest_since") or "").strip()[:5],
         guest_until=str(data.get("guest_until") or "").strip()[:5],
         guest_why=str(data.get("guest_why") or "").strip()[:20],
+        he_doing="" if fake else str(data.get("he_doing") or "").strip(),
     )
 
 

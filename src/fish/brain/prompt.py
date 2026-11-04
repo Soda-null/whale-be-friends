@@ -88,6 +88,8 @@ class Situation:
     places: str = ""  # nearby places, names and walking minutes
     day_line: str = ""  # solar term, holiday (decision 24)
     cottage: str = ""  # her cottage right now (decision 26); when set, the real city is his, not hers
+    him: str = ""  # his status: where he is, how they talk, what he is up to (decision 51)
+    face: bool = False  # he is right in front of her: this chat is spoken, not texted
     pastimes_line: str = ""  # the book she is reading
     today_line: str = ""  # what she did with her free moments today
     growth: list[str] = field(default_factory=list)  # layer A: how she has changed from her origin
@@ -193,6 +195,9 @@ def home_check(cottage: str) -> str:
                        "别添；谁放的就说谁放的。跟你前面聊天里说的对不上，就是那时没做成，顺口改口）")
 
 
+# Said right at his line, like what her room says: in the middle of the prompt a rule loses to the
+# chat around it, and earlier today that chat was texting.
+FACE_NOW = "（他就在你眼前，这句是当面说的，不是手机上发来的）"
 NOTHING_FOUND = ("（他这句话的字眼让你什么也没想起来，可他可能换了个说法问：先看看上面“你一直记得的”和"
                  "“你们之间的约定”，意思对得上的就照那里说。那里、“这句话让你想起的”和这次聊天里都真没有，"
                  "就直说忘了、让他提醒你；别说任何具体的东西，也别顺着他问法里的说法往下编）")
@@ -265,7 +270,8 @@ def build_chat_messages(ctx: Situation) -> list[dict[str, str]]:
     # not in front of her would only take the room of what she remembers (memory v3 §13).
     on = {name for name, there in (
         ("picture", ctx.user_image), ("shared", ctx.shared), ("pages", ctx.pages), ("pacts", ctx.pacts),
-        ("stickers", ctx.stickers), ("nostickers", not ctx.stickers), ("cottage", ctx.cottage),
+        ("stickers", ctx.stickers), ("nostickers", not ctx.stickers and not ctx.face), ("cottage", ctx.cottage),
+        ("him", ctx.him), ("face", ctx.face), ("phone", not ctx.face), ("phone_home", ctx.cottage and not ctx.face),
         ("town", not ctx.cottage), ("growth", ctx.growth), ("howto", ctx.howto), ("followups", ctx.followups),
         ("seen", ctx.seen), ("looked_up", ctx.looked_up), ("mentioned", ctx.mentioned),
         ("fuzzy", any(r.fuzzy or r.cued for r in ctx.recalled))) if there}
@@ -277,7 +283,7 @@ def build_chat_messages(ctx: Situation) -> list[dict[str, str]]:
         stage=ctx.stage, stage_rules=ctx.stage_rules or "（照平时）",
         howto=render_howto(ctx.howto), stickers=render_stickers(ctx.stickers),
         phase=render_phase(ctx.phase), growth=render_growth(ctx.growth),
-        home=render_home(ctx),
+        home=render_home(ctx), him=ctx.him,
         shared=ctx.shared or "（没有）", today=ctx.today_section or "（没算）",
         pacts=render_pacts(ctx.pacts, ctx.stars), pages=render_pages(ctx.pages, ctx.now.date()),
     )
@@ -301,6 +307,8 @@ def build_chat_messages(ctx: Situation) -> list[dict[str, str]]:
         user_text = f"{user_text}\n" + owner_words(NOTHING_FOUND)
     if ctx.cottage and HOME_WORDS.search(ctx.user_text):  # he asks about her room: its truth right at his line
         user_text = f"{user_text}\n" + home_check(ctx.cottage)
+    if ctx.face:
+        user_text = f"{user_text}\n" + owner_words(FACE_NOW)
     if ctx.user_image:  # pictures may only ride in a user message (DeepSeek's rule)
         # With a picture in the message the model sometimes chats in prose before the JSON;
         # a reminder right next to the picture keeps it to the format.

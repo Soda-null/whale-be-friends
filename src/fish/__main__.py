@@ -187,22 +187,40 @@ def home_words(settings: Settings, words: list[str]) -> None:
     cottage(settings, None, [])
 
 
+def me(settings: Settings, words: list[str]) -> None:
+    """His status as she sees it (decision 51); with words, what he is up to now. No model call."""
+    home = Cottage(settings.db_path.parent / "cottage" / "now.json")
+    now = datetime.now()
+    try:
+        if words:
+            home.he_is_doing(" ".join(words), now)
+        status = home.him_status(now)
+    except ValueError as e:
+        raise SystemExit(str(e))
+    print("== 你的状态（她看到的就是这些）==")
+    for line in status.text.splitlines():
+        print("  " + line.lstrip("- ").replace("你", "她"))
+
+
 def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(prog="fish", description="大肥鱼")
     ap.add_argument("command", nargs="?", choices=["chat", "nightly", "browse", "life", "show", "stickers", "cottage", "home",
-                                                   "wechat"], default="chat")
+                                                   "me", "wechat"], default="chat")
     ap.add_argument("subcommand", nargs="?", help="wechat: login; stickers: a folder of pictures; cottage: put / sill; life: how many diaries")
     ap.add_argument("rest", nargs="*", help="cottage put / sill: what")
     args = ap.parse_args(argv)
     if args.subcommand is not None and (args.command, args.subcommand) != ("wechat", "login") \
-            and args.command not in ("stickers", "cottage", "life", "home"):
+            and args.command not in ("stickers", "cottage", "life", "home", "me"):
         ap.error(f"unexpected argument: {args.subcommand}")
-    if args.rest and args.command not in ("cottage", "home"):
+    if args.rest and args.command not in ("cottage", "home", "me"):
         ap.error(f"unexpected argument: {' '.join(args.rest)}")
 
     settings = load_settings()
     if args.command == "cottage":
         cottage(settings, args.subcommand, args.rest)
+        return
+    if args.command == "me":
+        me(settings, [w for w in [args.subcommand, *args.rest] if w is not None])
         return
     if args.command == "home":
         home_words(settings, [w for w in [args.subcommand, *args.rest] if w is not None])

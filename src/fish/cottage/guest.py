@@ -61,6 +61,7 @@ class GuestMixin:
             return None
         line = owner_words("他回去了") if room.guest.get("here") else owner_words("他说不过来了")
         room.guest = {}
+        room.him = {}  # he has moved: what he was up to before is over (decision 51)
         self.note(room, now, line)
         self.save(room)
         return line
@@ -83,6 +84,7 @@ class GuestMixin:
 
     def _arrive(self, room: Room, at: datetime, change: Change | None = None) -> str:
         room.guest["here"] = True
+        room.him = {}  # he has moved: what he was up to before is over (decision 51)
         why = room.guest.get("why")
         stay = f"，说待到 {room.guest['until'][11:16]}" if room.guest.get("said", True) else ""
         line = owner_words("他来了" + (f"（{why}）" if why else "") + stay)
@@ -99,6 +101,7 @@ class GuestMixin:
         if g.get("here") and datetime.fromisoformat(g["until"]) <= now:
             self.note(room, datetime.fromisoformat(g["until"]), owner_words("他回去了"), change)
             room.guest = {}
+            room.him = {}
 
     @staticmethod
     def guest_line(room: Room) -> str:

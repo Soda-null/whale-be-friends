@@ -8,6 +8,7 @@
 #   yu 7              the same with a week of diaries (any number)
 #   yu mem            what she remembers (same as show)
 #   yu room           her cottage; yu put 鸡蛋 [顿数] / yu sill 一盆薄荷 put something in
+#   yu me             your status as she sees it; yu me 躺在她沙发上 says what you are up to (decision 51)
 #   yu 往冰箱放两盒牛奶   anything else is plain words for her room: put things in, take things out
 #   yu 把窗台上的小葱拿走   (one model call to understand it; the room's rules do it; decision 36)
 #   yu log            live WeChat log
@@ -31,6 +32,7 @@ case "${1:-life}" in
     [0-9]*)   ssh "$BOX" "cd Dafeiyu && TZ=$TZ_USER .venv/bin/python -m fish life $1" ;;
     put|sill) ssh "$BOX" "cd Dafeiyu && TZ=$TZ_USER .venv/bin/python -m fish cottage $*" ;;
     room)     ssh "$BOX" "cd Dafeiyu && TZ=$TZ_USER .venv/bin/python -m fish cottage" ;;
+    me)       ssh "$BOX" "cd Dafeiyu && TZ=$TZ_USER .venv/bin/python -m fish $*" ;;
     mem|show) ssh "$BOX" "cd Dafeiyu && TZ=$TZ_USER .venv/bin/python -m fish show" ;;
     notebook) ssh "$BOX" "cat Dafeiyu/data/notebook_export.md" ;;
     log|logs) ssh -t "$BOX" "TZ=$TZ_USER journalctl --user -u dafeiyu-wechat -f -o short-iso" ;;

@@ -123,3 +123,10 @@ class MemoryChanged:
     at: datetime
     ids: tuple[int, ...] = field(default_factory=tuple)
     why: str = ""
+
+
+@dataclass(frozen=True)
+class HisStatus:
+    """Him as she sees him right now (decision 51): the room's answer for a chat turn."""
+    text: str = ""  # the lines she reads; "" when there is no room to know it from
+    together: bool = False  # face to face in her room, not by phone

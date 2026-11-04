@@ -30,7 +30,7 @@ from fish.brain.reply import FALLBACK_SAY, PLAIN_REMINDER, Replier, plain_text  
 from fish.config import Settings, owner_words
 from fish.cottage import Cottage, RoomNode, invented_act, leaving_words
 from fish.messages import Incoming, Outgoing, data_url, sniff_mime
-from fish.msgs import Chatted, HeSaid, SheSaid
+from fish.msgs import Chatted, HeSaid, HisStatus, SheSaid
 from fish.memory import (ABOUT_HIM_KINDS, FOLD_BATCH, PACT_LINK, Diary, Episode, EpisodeManager, Memory,
                          MemoryStore, Moment, Pastimes, PhaseStore, ProspectiveStore, Recollector, Relationship,
                          StickerAlbum, TraitStore, Window, asks_recall, echoes_her, his_line, keys_of, overlap,
@@ -201,12 +201,16 @@ class Brain:
 
         sit, shared_note = self.situation(incoming, ep, mood, stage, now)
         reply, seen_source = self.replier.reply(sit)
+        if sit.face:  # nobody hands over a sticker across the table (decision 51)
+            reply.sticker = None
         if reply.do and self.room is not None:  # she said she is off to do it: the room does it now
             self.room.act(reply.do, now, reply.do_arg)
         if reply.guest and self.room is not None:  # he says he is at her door, or going home (decision 41)
             self.room.visit(reply.guest, now, reply.guest_since, reply.guest_until, reply.guest_why)
         elif self.room is not None and self.room.here(now) and leaving_words(incoming.text):
             self.room.visit("leave", now)  # he said he is off home; her reply forgot to say he went
+        if reply.he_doing and self.room is not None:  # after his comings and goings, which clear it
+            self.room.he_is_doing(reply.he_doing, now)
         if self.room is not None:  # what she says of her home, held against the room (decision 38)
             reply.say, why = check_home(self.llm, self.room.record(now), incoming.text, reply.say)
             if why:
@@ -220,6 +224,7 @@ class Brain:
         r = self.recollector.recollect(incoming.text, ep, now, pages=self.settings.pages, him=owner_words("他"))
         shared, shared_note = self.open_shared(incoming)
         image = incoming.image
+        him = self.room.him(now) if self.room is not None else HisStatus()
         sit = Situation(
             persona=self.persona, now=now, mood=mood,
             relationship=self.relationship.stats(now),
@@ -232,7 +237,8 @@ class Brain:
             stage=stage, stage_rules=self.stages.get(stage, ""), howto=r.howto,
             phase=r.phase, growth=self.growth_lines(), **self.place_fields(),
             **self.day_fields(now), cottage=self.cottage_text(now, mood.hunger, mood.energy),
-            stickers=self.album.offer(), user_image=data_url(image) if image else None,
+            him=him.text, face=him.together,
+            stickers=[] if him.together else self.album.offer(), user_image=data_url(image) if image else None,
             shared=shared, today_section=r.today, pacts=r.pacts, stars=r.stars,
             pages=r.pages, nothing_found=r.nothing_found,
         )
