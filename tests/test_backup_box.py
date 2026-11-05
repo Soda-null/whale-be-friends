@@ -100,11 +100,9 @@ def test_auto_skips_when_fresh_and_check_only_speaks_when_stale(world):
     assert len(backups(dest)) == 2
 
 
-def only_the_newest_stay(run, dest, n):
-    for i in range(n):
+def back_up_times(run, n):
+    for _ in range(n):
         assert run().returncode == 0
-        import time
-        time.sleep(1.01)  # the folder's name has seconds in it
 
 
 def test_only_the_newest_are_kept_and_nothing_else_is_touched(world):
@@ -112,15 +110,15 @@ def test_only_the_newest_are_kept_and_nothing_else_is_touched(world):
     dest.mkdir()
     (dest / "backup.log").write_text("log")
     (dest / "keep-me").mkdir()
-    only_the_newest_stay(run, dest, 4)
+    back_up_times(run, 4)
     assert len(backups(dest)) == 3
     assert (dest / "backup.log").exists() and (dest / "keep-me").exists()
-    assert all(count(b / "fish.db") == 5 for b in backups(dest))
+    assert all(count(b / "fish.db") == 5 and not list(b.glob(".partial*")) for b in backups(dest))
 
 
 def test_when_she_has_lost_messages_no_old_copy_is_deleted(world):
     run, her, dest = world
-    only_the_newest_stay(run, dest, 3)
+    back_up_times(run, 3)
     database(her / "data" / "fish.db", 2)
     done = run()
     assert done.returncode == 1

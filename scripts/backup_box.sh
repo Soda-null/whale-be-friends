@@ -34,6 +34,10 @@ back_up() {
     mkdir -p "$DEST"
     chmod 700 "$DEST"
     stamp="$(date +%Y-%m-%d-%H%M%S)"
+    while [ -e "$DEST/$stamp" ]; do  # two in one second: mv would put the new one inside the old
+        sleep 1
+        stamp="$(date +%Y-%m-%d-%H%M%S)"
+    done
     tmp="$DEST/.partial-$stamp"
     trap 'rm -rf "$tmp"' EXIT
     prev="$(latest)"
