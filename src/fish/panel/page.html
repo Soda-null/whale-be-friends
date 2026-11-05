@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>大肥鱼</title>
+<style>
+:root {
+  --paper: #f5f1e8; --card: #fffdf8; --ink: #2b2a26; --soft: #6f6b60; --line: #e4dccb;
+  --lake: #1f6580; --lake-soft: #dcebef; --warn: #9a4b16; --warn-soft: #fbead8; --good: #3d7d4f; --bad: #b0412f;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #16191b; --card: #1f2427; --ink: #e8e5dd; --soft: #a3a097; --line: #30373b;
+    --lake: #7cc0d8; --lake-soft: #1f3640; --warn: #efb27c; --warn-soft: #3a2a1b; --good: #7fc191; --bad: #e68a7a;
+  }
+}
+* { box-sizing: border-box; }
+html { background: var(--paper); }
+body { margin: 0; color: var(--ink); background: var(--paper);
+  font: 15px/1.65 -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; }
+header { position: sticky; top: 0; z-index: 2; background: var(--paper); border-bottom: 1px solid var(--line); }
+.bar { max-width: 1040px; margin: 0 auto; padding: 12px 20px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; }
+.name { font-size: 19px; font-weight: 650; letter-spacing: .02em; }
+.clock { color: var(--soft); font-size: 13px; margin-left: auto; font-variant-numeric: tabular-nums; }
+nav { flex-basis: 100%; display: flex; gap: 2px; overflow-x: auto; }
+nav button { background: none; border: 0; border-bottom: 2px solid transparent; color: var(--soft); font: inherit;
+  padding: 7px 12px; cursor: pointer; white-space: nowrap; border-radius: 0; }
+nav button:hover { color: var(--ink); }
+nav button[aria-current="page"] { color: var(--lake); border-bottom-color: var(--lake); font-weight: 600; }
+main { max-width: 1040px; margin: 0 auto; padding: 18px 20px 48px; }
+.alert { background: var(--warn-soft); color: var(--warn); border-radius: 8px; padding: 9px 13px; margin-bottom: 10px; }
+.columns { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.stack { display: grid; gap: 16px; min-width: 0; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 15px 18px; min-width: 0; }
+h2 { font-size: 13px; color: var(--soft); font-weight: 600; margin: 0 0 8px; letter-spacing: .03em; }
+.mood { font-size: 24px; line-height: 1.4; font-weight: 600; }
+.phase { color: var(--soft); margin-top: 4px; }
+ul { list-style: none; margin: 0; padding: 0; }
+.plain li { padding: 4px 0; overflow-wrap: anywhere; }
+.plain li + li { border-top: 1px solid var(--line); }
+.timed li { display: grid; grid-template-columns: 5.5em minmax(0, 1fr); gap: 8px; padding: 3px 0; }
+.timed .when { color: var(--soft); font-variant-numeric: tabular-nums; }
+.timed span { overflow-wrap: anywhere; min-width: 0; }
+.diary li { grid-template-columns: 6.3em minmax(0, 1fr); }
+.empty { color: var(--soft); }
+.pairs { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 3px 12px; margin: 0 0 12px; }
+.pairs dt { color: var(--soft); }
+.pairs dd { margin: 0; overflow-wrap: anywhere; }
+textarea, input[type=search], input[type=text], select { width: 100%; font: inherit; color: var(--ink); background: var(--paper);
+  border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+select { width: auto; padding: 3px 8px; }
+textarea { resize: vertical; min-height: 66px; }
+textarea:focus, input:focus, select:focus, button:focus-visible { outline: 2px solid var(--lake); outline-offset: 1px; }
+.do { margin-top: 8px; background: var(--lake); color: var(--card); border: 0; border-radius: 8px; padding: 7px 15px; font: inherit; font-weight: 600; cursor: pointer; }
+.do:hover { filter: brightness(1.08); }
+.do:disabled { opacity: .55; cursor: wait; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+.chip { background: var(--lake-soft); color: var(--lake); border: 0; border-radius: 99px; padding: 2px 11px; font: inherit; font-size: 13px; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--lake); color: var(--card); }
+.note { color: var(--soft); font-size: 13px; margin-top: 6px; }
+.said { margin-top: 8px; padding: 7px 10px; border-left: 3px solid var(--lake); background: var(--lake-soft); border-radius: 0 6px 6px 0; overflow-wrap: anywhere; white-space: pre-line; }
+.said.bad { border-left-color: var(--bad); color: var(--bad); background: var(--warn-soft); }
+.head-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; }
+.head-row h2 { margin: 0; }
+.tools { display: grid; gap: 9px; margin-bottom: 8px; }
+.memory { padding: 8px 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; white-space: pre-line; }
+.memory .tag { font-size: 12px; color: var(--soft); margin-top: 1px; }
+.faded { opacity: .62; }
+.bars { display: grid; grid-template-columns: auto minmax(0, 1fr) 2.2em; gap: 4px 10px; align-items: center; margin-top: 10px; font-size: 13px; color: var(--soft); }
+.track { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.fill { height: 100%; background: var(--lake); }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; background: var(--bad); }
+.dot.on { background: var(--good); }
+.big { font-size: 18px; font-weight: 600; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; font: 13px/1.7 ui-monospace, "SF Mono", Menlo, "PingFang SC", monospace; margin: 0; }
+@media (max-width: 760px) { .columns { grid-template-columns: minmax(0, 1fr); } .bar, main { padding-left: 16px; padding-right: 16px; } }
+</style>
+</head>
+<body>
+<header><div class="bar">
+  <div class="name">大肥鱼</div>
+  <div class="clock" id="clock"></div>
+  <nav id="tabs"></nav>
+</div></header>
+<main id="main"></main>
+<script>
+"use strict";
+const TOKEN = "__TOKEN__";
+const main = document.getElementById("main");
+const clock = document.getElementById("clock");
+let current = "today", diaryDays = 5, reviewDays = 7, memoryFilter = "全部", memorySearch = "", memoryData = null, busy = false;
+let roomSaid = "";  // what the room just answered, kept across the redraw that shows the room as it is now
+
+// Everything shown goes in as text, never as HTML: her memories hold words from the web.
+function el(tag, className, ...children) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  for (const child of children) if (child !== null && child !== undefined) node.append(child);
+  return node;
+}
+function card(title, ...children) { return el("section", "card", title ? el("h2", "", title) : null, ...children); }
+function list(items, className) { return el("ul", className || "plain", ...items.map(x => el("li", "", x))); }
+function timed(items, extra) {
+  return el("ul", "timed " + (extra || ""), ...items.map(x => el("li", "", el("span", "when", x.when), el("span", "", x.text))));
+}
+function empty(words) { return el("div", "empty", words); }
+function said(words, bad) { return el("div", "said" + (bad ? " bad" : ""), words); }
+function button(words, onClick) { const b = el("button", "do", words); b.type = "button"; b.onclick = onClick; return b; }
+
+async function api(path, words) {
+  const options = { headers: { "X-Panel-Token": TOKEN } };
+  if (words !== undefined) {
+    options.method = "POST";
+    options.headers["Content-Type"] = "application/json";
+    options.body = JSON.stringify({ words });
+  }
+  let reply;
+  try { reply = await fetch(path, options); } catch (e) { return { ok: false, error: "面板的后台停了，重新打开一次就好" }; }
+  if (reply.status === 403) return { ok: false, error: "页面过期了，刷新一下" };
+  try { return await reply.json(); } catch (e) { return { ok: false, error: "后台回得不对，刷新试试" }; }
+}
+
+function showError(message) { main.replaceChildren(el("div", "alert", message)); }
+
+// One form: words in, a button, what came back. `after` redraws what the words changed.
+function sayBox(path, placeholder, label, after, rows) {
+  const area = el("textarea");
+  area.rows = rows || 2;
+  area.placeholder = placeholder;
+  area.maxLength = 200;
+  const outcome = el("div");
+  const send = button(label, async () => {
+    const words = area.value.trim();
+    if (!words) return area.focus();
+    send.disabled = true;
+    outcome.replaceChildren(el("div", "note", "等她那边回话……"));
+    const reply = await api(path, words);
+    send.disabled = false;
+    if (reply.ok) area.value = "";
+    outcome.replaceChildren(reply.ok ? said(after ? after(reply.data) : "好了") : said(reply.error, true));
+  });
+  area.addEventListener("keydown", e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) send.click(); });
+  return { area, nodes: [area, send, outcome] };
+}
+
+function renderStatus(holder, pairs) {
+  holder.replaceChildren(el("dl", "pairs", ...pairs.flatMap(p => [el("dt", "", p.name), el("dd", "", p.value)])));
+}
+
+const views = {
+  async today() {
+    const [life, me] = await Promise.all([api(`/api/life?days=${diaryDays}`), api("/api/me")]);
+    if (current !== "today") return;
+    if (!life.ok) return showError(life.error);
+    const d = life.data;
+    clock.textContent = d.at ? `她那边 ${d.at}` : "";
+    const days = el("select");
+    for (const n of [3, 5, 7, 30]) { const o = el("option", "", `最近 ${n} 篇`); o.value = n; o.selected = n === diaryDays; days.append(o); }
+    days.setAttribute("aria-label", "看几篇日记");
+    days.onchange = () => { diaryDays = Number(days.value); show("today"); };
+
+    const status = el("div");
+    if (me.ok) renderStatus(status, me.data); else status.append(said(me.error, true));
+    const tell = sayBox("/api/me", "你在干嘛，比如：躺在她沙发上", "告诉她", data => { renderStatus(status, data); return "她知道了（两小时后过期）"; }, 2);
+    const room = sayBox("/api/room", "用大白话说，比如：往冰箱放两盒牛奶", "放进去", lines => { roomSaid = lines.join("\n") || "好了"; setTimeout(refresh); return roomSaid; }, 2);
+    if (roomSaid) { room.nodes[2].append(said(roomSaid)); roomSaid = ""; }
+    const chips = el("div", "chips", ...["往冰箱放两盒牛奶", "给米缸添点米", "在窗台放一盆薄荷"].map(words => {
+      const c = el("button", "chip", words); c.type = "button"; c.onclick = () => { room.area.value = words; room.area.focus(); }; return c;
+    }));
+
+    main.replaceChildren(
+      ...d.alerts.map(a => el("div", "alert", a)),
+      el("div", "columns",
+        el("div", "stack",
+          card("她现在", el("div", "mood", d.mood || "（没读到心情）"), d.phase ? el("div", "phase", "这阵子：" + d.phase) : null),
+          card("今天", d.today.length ? timed(d.today) : empty("还没什么事"),
+               d.reading ? el("div", "note", "在读 / 在追：" + d.reading) : null),
+          el("section", "card", el("div", "head-row", el("h2", "", "日记"), days),
+             d.diary.length ? timed(d.diary, "diary") : empty("还没写过"))),
+        el("div", "stack",
+          card("你的状态", status, ...tell.nodes),
+          card("她的屋里", d.room.length ? list(d.room) : empty("没读到")),
+          card("往屋里放点、拿点东西", chips, ...room.nodes, el("div", "note", "每次问一次模型，花一点点钱。")))));
+  },
+
+  async memories() {
+    const reply = await api("/api/memories");
+    if (current !== "memories") return;
+    if (!reply.ok) return showError(reply.error);
+    memoryData = reply.data;
+    drawMemories();
+  },
+
+  async review() {
+    const reply = await api(`/api/review?days=${reviewDays}`);
+    if (current !== "review") return;
+    if (!reply.ok) return showError(reply.error);
+    const days = el("select");
+    for (const n of [7, 14, 30]) { const o = el("option", "", `最近 ${n} 天`); o.value = n; o.selected = n === reviewDays; days.append(o); }
+    days.setAttribute("aria-label", "看几天");
+    days.onchange = () => { reviewDays = Number(days.value); show("review"); };
+    main.replaceChildren(el("div", "head-row", el("h2", "", "她这段时间到底过得怎么样（只是数数，不调模型）"), days),
+      el("div", "stack", ...reply.data.map(s => card(s.title, s.inline ? el("div", "", s.inline) : null,
+        s.lines.length ? el("pre", "", s.lines.join("\n")) : null))));
+  },
+
+  async machine() {
+    const reply = await api("/api/machine");
+    if (current !== "machine") return;
+    if (!reply.ok) return showError(reply.error);
+    const d = reply.data;
+    const outcome = el("div");
+    const back = button("现在备份一份", async () => {
+      back.disabled = true;
+      outcome.replaceChildren(el("div", "note", "正在从她那边拷……"));
+      const r = await api("/api/backup", "");
+      back.disabled = false;
+      outcome.replaceChildren(said(r.ok ? r.data : r.error, !r.ok));
+      if (r.ok) setTimeout(() => show("machine"), 1500);
+    });
+    main.replaceChildren(el("div", "columns",
+      el("div", "stack",
+        card("她在不在线", el("div", "big", el("span", "dot" + (d.online ? " on" : "")), d.online ? "在，微信上能回你" : "不在，她现在回不了微信")),
+        card("夜里整理", el("div", "", d.next_night ? `下一次：${d.next_night}` : "没查到下一次的时间"))),
+      el("div", "stack",
+        card("硬盘", el("div", "big", d.free_gb === null ? "没查到" : `还剩 ${d.free_gb} GB`),
+             el("div", "note", "不到 10 GB 时，“今天”那页最上面会提醒。")),
+        d.has_box ? card("备份到这台电脑",
+          el("div", "big", d.last_backup ? `最新：${d.last_backup}` : "还没有备份"),
+          el("div", "note", `一共留着 ${d.backups} 份，大约一天自动一份。`), back, outcome) : null)));
+  },
+};
+
+function drawMemories() {
+  const d = memoryData;
+  const search = el("input");
+  search.type = "search";
+  search.placeholder = "搜她记得的事";
+  search.value = memorySearch;
+  search.setAttribute("aria-label", "搜她记得的事");
+  const results = el("div");
+  const counts = {};
+  for (const m of d.memories) counts[m.state] = (counts[m.state] || 0) + 1;
+  const states = ["全部", "清楚", "模糊", "想不起", "钉住"];
+  const chips = el("div", "chips", ...states.map(s => {
+    const c = el("button", "chip", s === "全部" ? `全部 ${d.memories.length}` : `${s} ${counts[s] || 0}`);
+    c.type = "button";
+    c.setAttribute("aria-pressed", String(s === memoryFilter));
+    c.onclick = () => { memoryFilter = s; drawMemories(); };
+    return c;
+  }));
+  function draw() {
+    const word = memorySearch.trim().toLowerCase();
+    const shown = d.memories.filter(m => (memoryFilter === "全部" || m.state === memoryFilter)
+      && (!word || m.text.toLowerCase().includes(word)));
+    results.replaceChildren(...(shown.length ? shown.map(m => el("div", "memory" + (m.state === "想不起" ? " faded" : ""),
+      m.text, el("div", "tag", `${m.kind} · ${m.state}${m.source ? " · 网上看到的" : ""}`))) : [empty("没有这样的记忆")]));
+  }
+  search.oninput = () => { memorySearch = search.value; draw(); };
+  draw();
+  const body = Object.entries(d.body);
+  main.replaceChildren(el("div", "columns",
+    el("div", "stack",
+      card("她记得的事", el("div", "tools", search, chips), results)),
+    el("div", "stack",
+      card("她这个人", el("div", "", d.mood), d.phase ? el("div", "phase", d.phase) : null,
+        body.length ? el("div", "bars", ...body.flatMap(([k, v]) => [el("span", "", k),
+          (() => { const f = el("div", "fill"); f.style.width = Math.min(100, v) + "%"; return el("div", "track", f); })(),
+          el("span", "", String(v))])) : null),
+      card("你们俩", el("div", "", d.relationship), d.traits ? el("div", "note", "底色：" + d.traits) : null,
+        d.pastimes ? el("div", "note", "两周的空闲：" + d.pastimes) : null),
+      card("她惦记着要问的", d.waiting.length ? timed(d.waiting, "diary") : empty("现在没有")),
+      card("一直记得的", d.profile.length ? list(d.profile) : empty("还没有")),
+      d.howto.length ? card(d.howto_title || "相处的方式", list(d.howto)) : null,
+      card("最近聊过", d.chats.length ? list(d.chats.map(c => c.text)) : empty("还没有")))));
+}
+
+const tabs = [["today", "今天"], ["memories", "记忆"], ["machine", "机器"]];
+function drawTabs() {
+  document.getElementById("tabs").replaceChildren(...tabs.map(([key, words]) => {
+    const b = el("button", "", words);
+    b.type = "button";
+    if (key === current) b.setAttribute("aria-current", "page");
+    b.onclick = () => show(key);
+    return b;
+  }));
+}
+
+async function show(key) {
+  current = key;
+  drawTabs();
+  main.replaceChildren(empty("正在问她那边……"));
+  await views[key]();
+}
+
+// Quietly bring "today" up to date, unless he is typing in it.
+async function refresh() {
+  if (current !== "today" || document.hidden || busy) return;
+  const active = document.activeElement;
+  if (active && active.tagName === "TEXTAREA" && active.value) return;
+  const typed = [...main.querySelectorAll("textarea")].some(t => t.value);
+  const pending = main.querySelector("button.do:disabled");
+  if (typed || pending) return;
+  busy = true;
+  const y = window.scrollY;
+  try { await views.today(); window.scrollTo(0, y); } finally { busy = false; }
+}
+
+(async () => {
+  const features = await api("/api/features");
+  if (features.ok && features.data.review) tabs.splice(2, 0, ["review", "复盘"]);
+  await show("today");
+})();
+setInterval(refresh, 60000);
+setInterval(() => { fetch("/api/ping").catch(() => {}); }, 60000);
+</script>
+</body>
+</html>

@@ -9,7 +9,7 @@ import fish
 
 MODULES = [
     "fish.config", "fish.storage", "fish.persona", "fish.memory", "fish.mood",
-    "fish.brain", "fish.routines", "fish.channels", "fish.cottage", "fish.urges", "fish.msgs", "fish.bus", "fish.clock", "fish.app",
+    "fish.brain", "fish.routines", "fish.channels", "fish.cottage", "fish.urges", "fish.msgs", "fish.bus", "fish.clock", "fish.app", "fish.panel",
 ]
 NO_CHANNELS = ["brain", "memory", "mood", "persona", "storage", "routines", "cottage", "urges"]
 SRC = Path(fish.__file__).parent

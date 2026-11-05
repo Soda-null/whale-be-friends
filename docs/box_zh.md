@@ -13,6 +13,8 @@
 
 ## 1. 常用命令（都在 Mac 上敲）
 
+不想敲命令：双击 `~/Applications/大肥鱼.app`（`scripts/panel_app.sh` 做的），大多数事在网页上点就行（决定 54）。
+
 最省事：短命令 `yu`（在 `~/.local/bin/yu` 放一行 `exec 仓库路径/scripts/fish.sh "$@"`，哪个文件夹都能敲）。`yu` 看她今天：在干嘛、小屋、今天的事、最近 3 篇日记；`yu 7` 看一周日记；`yu mem` 看她记了什么；`yu room` 看小屋；往她屋里放东西、拿东西直接打大白话：`yu 往冰箱放两盒牛奶`、`yu 把她给我留的东西拿走`（决定 36，老写法 `yu put 鸡蛋` / `yu sill 一盆薄荷` 照用）；`yu log` 看实时日志。老写法 `scripts/fish.sh show | notebook | logs | sent | timers | browse` 照样能用，时间都按 Mac 上 `.env` 的 `TZ` 显示（box 系统时区可以和用户不同；她自己的钟本来就按 `TZ` 走）。下面是展开的写法。
 
 | 要做的事 | 命令 |

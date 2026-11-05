@@ -12,6 +12,7 @@
 #   yu 往冰箱放两盒牛奶   anything else is plain words for her room: put things in, take things out
 #   yu 把窗台上的小葱拿走   (one model call to understand it; the room's rules do it; decision 36)
 #   yu log            live WeChat log
+#   yu panel          the same things as a page in the browser (decision 54)
 #   yu backup         copy her to this Mac now (it also happens by itself once a day; decision 53)
 #   yu review [天数]   how she really did this week, counted (default 7 days; read-only, no model)
 #
@@ -33,6 +34,7 @@ case "${1:-life}" in
     life)     scripts/backup_box.sh --check; ssh "$BOX" "cd Dafeiyu && TZ=$TZ_USER .venv/bin/python -m fish life ${2:-}" ;;
     [0-9]*)   scripts/backup_box.sh --check; ssh "$BOX" "cd Dafeiyu && TZ=$TZ_USER .venv/bin/python -m fish life $1" ;;
     backup)   exec scripts/backup_box.sh ;;
+    panel)    exec .venv/bin/python -m fish.panel ;;
     put|sill) ssh "$BOX" "cd Dafeiyu && TZ=$TZ_USER .venv/bin/python -m fish cottage $*" ;;
     room)     ssh "$BOX" "cd Dafeiyu && TZ=$TZ_USER .venv/bin/python -m fish cottage" ;;
     me)       ssh "$BOX" "cd Dafeiyu && TZ=$TZ_USER .venv/bin/python -m fish $*" ;;
