@@ -24,6 +24,7 @@
 | 手动跑一次夜间整理 | `ssh box 'cd Dafeiyu && .venv/bin/python -m fish nightly'`（同一天跑两次第二次会跳过） |
 | 看她的小本本（夜里导出的） | `ssh box cat Dafeiyu/data/notebook_export.md` |
 | 看昨晚整理的日志 | `ssh box journalctl --user -u dafeiyu-nightly -n 20` |
+| 看她这周的真实表现（每周复盘，只读，不调模型，不用部署） | `yu review`；`yu review 30` 看 30 天 |
 | 看她空闲时干了什么 | `fish show` 的"空闲"一节（两周里每样选了几回、最近几段、在读的书）；见闻本身在 `fish show` 或导出文件里 |
 | 让她现在就逛一次 | `ssh box 'cd Dafeiyu && .venv/bin/python -m fish browse'`（手动的，一天一次，第二次跳过；平时她想逛才逛） |
 | 微信说过期了，重扫码 | 先 `ssh box systemctl --user stop dafeiyu-wechat`，再 `ssh -t box 'cd Dafeiyu && .venv/bin/python -m fish wechat login'`（二维码画在 Mac 的终端里），再 `ssh box systemctl --user start dafeiyu-wechat` |

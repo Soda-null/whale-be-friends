@@ -12,6 +12,7 @@
 #   yu 往冰箱放两盒牛奶   anything else is plain words for her room: put things in, take things out
 #   yu 把窗台上的小葱拿走   (one model call to understand it; the room's rules do it; decision 36)
 #   yu log            live WeChat log
+#   yu review [天数]   how she really did this week, counted (default 7 days; read-only, no model)
 #
 #   scripts/fish.sh show      what she remembers right now
 #   scripts/fish.sh notebook  last night's exported notebook (diary, notes, phase)
@@ -33,6 +34,7 @@ case "${1:-life}" in
     put|sill) ssh "$BOX" "cd Dafeiyu && TZ=$TZ_USER .venv/bin/python -m fish cottage $*" ;;
     room)     ssh "$BOX" "cd Dafeiyu && TZ=$TZ_USER .venv/bin/python -m fish cottage" ;;
     me)       ssh "$BOX" "cd Dafeiyu && TZ=$TZ_USER .venv/bin/python -m fish $*" ;;
+    review)   ssh "$BOX" "cd Dafeiyu && TZ=$TZ_USER .venv/bin/python - ${2:-7}" < scripts/review.py ;;  # piped: needs no deploy
     mem|show) ssh "$BOX" "cd Dafeiyu && TZ=$TZ_USER .venv/bin/python -m fish show" ;;
     notebook) ssh "$BOX" "cat Dafeiyu/data/notebook_export.md" ;;
     log|logs) ssh -t "$BOX" "TZ=$TZ_USER journalctl --user -u dafeiyu-wechat -f -o short-iso" ;;
@@ -51,6 +53,6 @@ case "${1:-life}" in
             "$folder/" "$BOX:$stage/"
         ssh "$BOX" "cd Dafeiyu && TZ=$TZ_USER .venv/bin/python -m fish stickers ~/$stage && rm -rf ~/$stage" ;;
     cottage)  shift; ssh "$BOX" "cd Dafeiyu && TZ=$TZ_USER .venv/bin/python -m fish cottage $*" ;;
-    -h|--help|help) echo "用法：yu [天数] | mem | room | put 东西 [顿数] | sill 东西 | log | sent | notebook | timers | browse | stickers <文件夹> | 一句大白话（往冰箱放两盒牛奶、把窗台上的小葱拿走）" ;;
+    -h|--help|help) echo "用法：yu [天数] | review [天数] | mem | room | put 东西 [顿数] | sill 东西 | log | sent | notebook | timers | browse | stickers <文件夹> | 一句大白话（往冰箱放两盒牛奶、把窗台上的小葱拿走）" ;;
     *)        printf '%s' "$*" | ssh "$BOX" "cd Dafeiyu && TZ=$TZ_USER .venv/bin/python -m fish home -" ;;
 esac
