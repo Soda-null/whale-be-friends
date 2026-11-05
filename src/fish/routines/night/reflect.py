@@ -41,6 +41,8 @@ def look_back(night: Night) -> None:
     newer = {m.id for m in old + old_howto
              if start < datetime.fromisoformat(m.created) < now}
     insights, howtos, outdated, confirms = night.thinker.reflect(gists, facts, old, old_howto, newer=newer)
+    if "reflect" in night.thinker.failed:  # not marked, so these chats wait for the next night
+        return
     for memory_id in outdated:
         store.weaken(memory_id, now)
     for memory_id in confirms:

@@ -28,6 +28,10 @@ def diary_day(now: datetime) -> date:
     return fish_day(now) - timedelta(days=1)
 
 
+def day_bounds(day: date) -> tuple[datetime, datetime]:
+    return datetime.combine(day, NIGHT_BOUNDARY), datetime.combine(day + timedelta(days=1), NIGHT_BOUNDARY)
+
+
 @dataclass
 class Night:
     conn: sqlite3.Connection
@@ -52,8 +56,8 @@ class Night:
 
     @property
     def day_start(self) -> datetime:
-        return datetime.combine(self.day, NIGHT_BOUNDARY)
+        return day_bounds(self.day)[0]
 
     @property
     def day_end(self) -> datetime:
-        return datetime.combine(self.day + timedelta(days=1), NIGHT_BOUNDARY)
+        return day_bounds(self.day)[1]

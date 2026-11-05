@@ -14,3 +14,9 @@ def _connect_without_fsync(*args, **kwargs):
 
 
 sqlite3.connect = _connect_without_fsync
+
+
+# A failed night call is tried again after a wait; tests do not wait.
+from fish.brain import consolidate  # noqa: E402
+
+consolidate.ASK_WAIT_SECONDS = 0

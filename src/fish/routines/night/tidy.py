@@ -9,7 +9,9 @@ from datetime import datetime
 from fish.brain import similarity
 from fish.memory import Memory, MemoryStore, overlap
 from fish.routines.night.context import Night, fish_day
+from fish.routines.night.missed import last_night_failed
 
+TIDY_CALLS = {"merge", "contradictions", "rewrite_facts"}  # these read over one day's new notes
 MERGE_SIMILARITY = 0.4  # bigram Dice; the model makes the final call, this only picks candidates
 # "住 3 号楼" and "搬到了七号楼" must look alike to the update check: numerals become digits.
 _NUMERALS = str.maketrans("〇零一二两三四五六七八九", "001223456789")
@@ -98,6 +100,9 @@ def take_stock(night: Night) -> None:
     caught = [m.id for m in store.alive() if m.pact and (m in night.new or m.last_time == day.isoformat())]
     if caught:
         night.report["pacts"] = caught
+    missed_day, failed = last_night_failed(night.conn)
+    if missed_day and missed_day != day and failed & TIDY_CALLS:  # that night's notes were never read over
+        night.new += [m for m in _new_today(store, missed_day) if m not in night.new]
 
 
 def merge_duplicates(night: Night) -> None:

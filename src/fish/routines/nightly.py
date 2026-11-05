@@ -8,6 +8,7 @@ The night is wired like the day (docs/nodes_design_zh.md step 5): one DayEnded g
 bus of its own, and each step below hears it, in this order, with the night's shared notebook
 (night/context.py). A step that fails does not stop the ones after it; the failure is raised
 when the night is done. Model steps need a Brain; without one only the mechanical ones run.
+What failed is written down for the next night to make up for (night/missed.py, decision 53).
 To do something new at night: write a step in night/, add it to NIGHT_STEPS.
 """
 
@@ -19,11 +20,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Callable
 
 from fish.brain import Consolidator
-from fish.bus import Bus
+from fish.bus import Bus, BusError
 from fish.memory import EpisodeManager, MemoryStore, PhaseStore, Relationship
 from fish.mood import MoodNode, MoodStore
 from fish.msgs import DayEnded, Rested
-from fish.routines.night import diary, reflect, tidy, upkeep
+from fish.routines.night import diary, missed, reflect, tidy, upkeep
 from fish.routines.night.context import NIGHT_BOUNDARY, Night, diary_day, fish_day
 from fish.routines.night.diary import GROWTH_EVERY_DAYS, SELF_NOTES_PER_NIGHT, strongest
 from fish.routines.night.reflect import REFLECT_AFTER_EPISODES, REFLECT_EVERY_DAYS
@@ -46,6 +47,7 @@ NIGHT_STEPS: list[Callable[[Night], None]] = [
     tidy.replace_old_facts,      # 3, 3a
     tidy.gist_repeats,           # 3b
     reflect.look_back,           # 4
+    diary.catch_up,              # 4a
     diary.write_diary,           # 5
     diary.write_letter,          # 5a
     diary.step_phase,            # 5b
@@ -88,5 +90,12 @@ def run_nightly(conn: sqlite3.Connection, now: datetime | None = None, *,
     bus.subscribe(Rested, MoodNode(moods).on_rested)  # her morning is the mood node's to set
     for step in NIGHT_STEPS:
         bus.subscribe(DayEnded, _hearing(step, night))
-    bus.publish(DayEnded(day, now))
+    crashed: list[str] = []
+    try:
+        bus.publish(DayEnded(day, now))
+    except BusError as e:
+        crashed = [getattr(h, "__qualname__", repr(h)) for h, _ in e.failures]
+        raise
+    finally:
+        missed.record(night, crashed)
     return night.report

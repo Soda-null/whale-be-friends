@@ -35,7 +35,7 @@ from fish.brain.leisure.book import where
 from fish.memory import (Diary, EpisodeManager, MemoryStore, Pastimes, PhaseStore, ProspectiveStore,
                          Relationship, TraitStore)
 from fish.mood import MoodStore, stage_of
-from fish.routines import run_browse, run_nightly
+from fish.routines import problems, run_browse, run_nightly
 from fish.routines.outside import run_outside
 from fish.routines.nightly import EXPORT_PATH
 from fish.routines.stickers import STICKER_TYPES, adopt_inbox, import_folder, inbox_of
@@ -102,6 +102,8 @@ def show(conn: sqlite3.Connection, now: datetime | None = None) -> None:
 def life(conn: sqlite3.Connection, settings: Settings, days: int = 3, now: datetime | None = None) -> None:
     """Her life, not her memory: what she is doing and what her day was, in one screen."""
     now = now or datetime.now()
+    for line in problems(conn, settings.db_path.parent, now):
+        print(f"！{line}")
     print(f"== 她现在（{now:%m-%d %H:%M}）==")
     events: list[str] = []
     if settings.cottage:
