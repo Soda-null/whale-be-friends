@@ -139,7 +139,7 @@ class Brain:
         return stage_of(self.relationship.closeness)
 
     def place_fields(self) -> dict[str, str]:
-        """Where she lives, today's weather, what is nearby (decision 15); empty until known."""
+        """Where she lives, the weather now, what is nearby (decision 15); empty until known."""
         folder = self.album.folder.parent / "home"
         home = load_home(folder)
         return {"home_line": home.line() if home else "",

@@ -2,12 +2,12 @@
 
 locate   the box's city-level position (ipinfo, which is itself city-level) and the
          neighbourhood name around it (OpenStreetMap Nominatim, zoom 14 = quarter level)
-weather  today's weather there (Open-Meteo, no key)
+weather  the weather there right now and the next few hours (Open-Meteo, no key)
 nearby   named places to eat and shop within walking distance (OpenStreetMap Overpass);
          names, kinds and walking minutes only — addresses are dropped on purpose
 map      a picture of the neighbourhood stitched from OpenStreetMap tiles, for her to look at
 
-All free services without keys; called once a day at most (weather) or once a month.
+All free services without keys; called about once an hour (weather) or once a month.
 """
 
 from __future__ import annotations
@@ -24,8 +24,9 @@ from fish.world.http import (Fetch, FetchBytes, FetchPost, urllib_fetch, urllib_
 NOMINATIM = ("https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lon}&zoom=14"
              "&format=jsonv2&accept-language=zh-CN,en")
 OPEN_METEO = ("https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}"
-              "&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,"
-              "precipitation_probability_max,weather_code,sunset&forecast_days=1&timezone=auto")
+              "&current=temperature_2m,weather_code,precipitation"
+              "&hourly=weather_code,precipitation,precipitation_probability"
+              "&daily=temperature_2m_max,temperature_2m_min,sunset&forecast_days=2&timezone=auto")
 OVERPASS = "https://overpass-api.de/api/interpreter"
 OVERPASS_MIRRORS = (OVERPASS, "https://overpass.private.coffee/api/interpreter",
                     "https://maps.mail.ru/osm/tools/overpass/api/interpreter")  # the main one is often busy
@@ -41,6 +42,11 @@ WEATHER = {0: "晴", 1: "晴", 2: "多云", 3: "阴", 45: "雾", 48: "雾", 51: 
            55: "毛毛雨", 61: "小雨", 63: "雨", 65: "大雨", 66: "冻雨", 67: "冻雨", 71: "小雪", 73: "雪",
            75: "大雪", 77: "雪粒", 80: "阵雨", 81: "阵雨", 82: "大阵雨", 85: "阵雪", 86: "阵雪",
            95: "雷雨", 96: "雷雨", 99: "雷雨"}
+WET_FROM = 51  # WMO codes from here up are something falling from the sky
+DRY_WORD = "阴"  # the model's code says it falls, its amount says nothing does
+LIKELY_FROM = 40  # % chance before she is told to expect it; the false rains of 11-01 to 11-05 were all below
+LOOK_AHEAD_HOURS = 12
+FELL_FROM_MM = 0.1
 
 
 @dataclass(frozen=True)
@@ -95,30 +101,66 @@ def locate(fetch: Fetch = urllib_fetch, at: str = "") -> Home:
 
 @dataclass(frozen=True)
 class Weather:
+    """What is true now, kept apart from what may happen: "今天毛毛雨" for a day with a small
+    chance of an hour of it read to her as rain all day, for days on end (decision 55)."""
     now_c: float
     low_c: float
     high_c: float
-    sky: str
-    rain_chance: int
+    sky: str  # right now
+    falling: bool  # something is coming down right now
+    earlier: str  # what came down earlier today ("小雨"), "" for nothing
+    later: str  # what is likely in the next hours ("20 点前后可能有小雨（可能性 60%）"), "" for nothing
     sunset: str  # HH:MM
 
     def line(self) -> str:
-        bits = [f"今天{self.sky}", f"{self.low_c:.0f} 到 {self.high_c:.0f} 度，现在 {self.now_c:.0f} 度"]
-        if self.rain_chance >= 40:
-            bits.append(f"下雨的可能 {self.rain_chance}%")
-        if self.sunset:
-            bits.append(f"{self.sunset} 日落")
-        return "，".join(bits)
+        now = f"现在{self.sky}" + ("" if self.falling or self.sky == "晴" else "，没下雨")
+        bits = [f"{now}，{self.now_c:.0f} 度"]
+        if self.earlier and not self.falling:
+            bits.append(f"今天早些时候有过{self.earlier}")
+        if self.later:
+            bits.append(self.later)
+        day = f"今天 {self.low_c:.0f} 到 {self.high_c:.0f} 度"
+        return "，".join(bits) + f"；{day}" + (f"，{self.sunset} 日落" if self.sunset else "")
+
+
+def _is_wet(code: object) -> bool:
+    return isinstance(code, int) and code >= WET_FROM
+
+
+def _word(code: int) -> str:
+    return WEATHER.get(code, "说不清")
+
+
+def _earlier_today(hourly: dict, hour: str) -> str:
+    """The most it came down in one hour earlier today, as a word."""
+    fell = [(mm, code) for t, code, mm in zip(hourly["time"], hourly["weather_code"], hourly["precipitation"])
+            if t[:10] == hour[:10] and t[:13] < hour and (mm or 0) >= FELL_FROM_MM and _is_wet(code)]
+    return _word(max(fell, key=lambda f: f[0])[1]) if fell else ""
+
+
+def _coming(hourly: dict, hour: str) -> str:
+    """The first of the next hours when something is likely to come down, in her words."""
+    ahead = [row for row in zip(hourly["time"], hourly["weather_code"], hourly["precipitation_probability"])
+             if row[0][:13] > hour][:LOOK_AHEAD_HOURS]
+    for t, code, chance in ahead:
+        if _is_wet(code) and (chance or 0) >= LIKELY_FROM:
+            when = f"{int(t[11:13])} 点前后" if t[:10] == hour[:10] else f"明天 {int(t[11:13])} 点前后"
+            return f"{when}可能有{_word(code)}（可能性 {chance}%）"
+    return ""
 
 
 def weather(home: Home, fetch: Fetch = urllib_fetch) -> Weather:
     d = json.loads(fetch(OPEN_METEO.format(lat=home.lat, lon=home.lon), 15.0))
     cur, day = d["current"], d["daily"]
-    code = day["weather_code"][0] if day.get("weather_code") else cur.get("weather_code", 0)
-    sunset = (day.get("sunset") or [""])[0][-5:]
+    code = int(cur.get("weather_code", 0))
+    falling = _is_wet(code) and float(cur.get("precipitation") or 0) > 0
+    sky = _word(code) if falling or not _is_wet(code) else DRY_WORD
+    hourly, hour = d.get("hourly"), str(cur.get("time", ""))[:13]
     return Weather(float(cur["temperature_2m"]), float(day["temperature_2m_min"][0]),
-                   float(day["temperature_2m_max"][0]), WEATHER.get(int(code), "说不清"),
-                   int((day.get("precipitation_probability_max") or [0])[0] or 0), sunset)
+                   float(day["temperature_2m_max"][0]), sky, falling,
+                   _earlier_today(hourly, hour) if hourly and hour else "",
+                   _coming(hourly, hour) if hourly and hour else "",
+                   (day.get("sunset") or [""])[0][-5:])
 
 
 def _distance_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:

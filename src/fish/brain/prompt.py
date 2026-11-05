@@ -87,7 +87,7 @@ class Situation:
     howto: list[Memory] = field(default_factory=list)  # the rules she drew for getting along
     phase: Phase | None = None  # layer B: how she has been these days
     home_line: str = ""  # where she lives, city and neighbourhood (decision 15)
-    weather_line: str = ""  # today's weather there
+    weather_line: str = ""  # the weather there now, and what may come
     places: str = ""  # nearby places, names and walking minutes
     day_line: str = ""  # solar term, holiday (decision 24)
     cottage: str = ""  # her cottage right now (decision 26); when set, the real city is his, not hers

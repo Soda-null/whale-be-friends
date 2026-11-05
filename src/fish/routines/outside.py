@@ -1,6 +1,6 @@
-"""Her place in the world (decision 15): where she lives, today's weather, what is nearby.
+"""Her place in the world (decision 15): where she lives, the weather now, what is nearby.
 
-Once per fish day (from 07:00): weather, and the holiday table when it is a week old. Once ever (or when missing): locate home, list
+About once an hour: the weather (decision 55). Once per fish day (from 07:00): the holiday table when it is a week old. Once ever (or when missing): locate home, list
 nearby places (refreshed every 30 days), fetch the neighbourhood map and let her look at
 it once, keeping up to three notes. Everything lives in data/home/ and the relationship
 ledger; nothing finer than a neighbourhood is stored.
@@ -25,7 +25,9 @@ from fish.world import (Fetch, FetchBytes, FetchPost, Home, Place, load_home, lo
 if TYPE_CHECKING:
     from fish.brain import Brain
 
-WEATHER_FROM = time(7, 0)
+HOLIDAYS_FROM = time(7, 0)
+WEATHER_EVERY = timedelta(minutes=50)  # the upkeep comes hourly: not a hair short of it, or it skips a round
+WEATHER_TRUSTED_FOR = timedelta(hours=3)  # no fresh look for this long: she no longer knows
 PLACES_EVERY_DAYS = 30
 
 
@@ -64,14 +66,18 @@ def run_outside(conn: sqlite3.Connection, now: datetime | None = None, *, brain:
             report["places_error"] = str(e)[:80]
 
     rel = Relationship(conn)
-    day = fish_day(now).isoformat()
-    if now.time() >= WEATHER_FROM and rel.get("weather_day") != day and claim_run(conn, "weather", day):
+    looked = rel.get("weather_at")
+    looked_at = datetime.fromisoformat(looked) if looked else None
+    if looked_at is None or now - looked_at >= WEATHER_EVERY:
         try:
             rel.set("weather_line", weather(home, fetch).line(), now)
-            rel.set("weather_day", day, now)
+            rel.set("weather_at", now.isoformat(timespec="seconds"), now)
             report["weather"] = rel.get("weather_line")
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:  # noqa: BLE001 - a failed look is tried again at the next upkeep
             report["weather_error"] = str(e)[:80]
+            if looked_at is None or now - looked_at >= WEATHER_TRUSTED_FOR:
+                rel.set("weather_line", "", now)  # better no weather than an old "现在下雨"
+    if now.time() >= HOLIDAYS_FROM and claim_run(conn, "holidays", fish_day(now).isoformat()):
         report["holidays"] = refresh_holidays(folder, now.date(), fetch=fetch)  # decision 24
 
     map_file = folder / "map.png"

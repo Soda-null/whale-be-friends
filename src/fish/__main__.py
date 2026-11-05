@@ -273,7 +273,7 @@ def main(argv: list[str] | None = None) -> None:
         upkeep = {"last": datetime.now()}
 
         def tick(send):
-            # today's weather and holiday table (once a day inside); hourly, so no network cannot mean a retry per poll
+            # the weather and the holiday table (once a day inside); hourly, so no network cannot mean a retry per poll
             if datetime.now() - upkeep["last"] >= timedelta(hours=1):
                 upkeep["last"] = datetime.now()
                 run_outside(conn, brain=brain)
