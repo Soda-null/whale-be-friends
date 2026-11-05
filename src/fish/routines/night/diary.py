@@ -1,7 +1,7 @@
-"""Night steps 5–5c: her diary and her own life (no diary for days before she met him; the
-diary call also rewrites the phase's sentence, slowly); the phase steps a fifth of the way
-toward what the day showed (decision 13); about once a month she looks back at herself and
-may move a slider a notch."""
+"""Night steps 4a–5c: a diary or letter an earlier night failed to write (decision 53); her
+diary and her own life (no diary for days before she met him; the diary call also rewrites the
+phase's sentence, slowly); the phase steps a fifth of the way toward what the day showed
+(decision 13); about once a month she looks back at herself and may move a slider a notch."""
 
 from __future__ import annotations
 
@@ -11,10 +11,13 @@ from datetime import date, datetime, timedelta
 from fish.brain import away, moment_line
 from fish.cottage import invented_act
 from fish.memory import Diary, Pastimes, TraitStore, first_message_at
-from fish.routines.night.context import Night, fish_day
+from fish.routines.night.context import Night, day_bounds, fish_day
+from fish.routines.night.missed import EPISODES_LOOKED_AT, chat_days
 
+CATCH_UP_PER_NIGHT = 2  # days; a long outage is made up for over a few nights, oldest first
 SELF_NOTES_PER_NIGHT = 1  # decision 19: her life grows by one thread a night at most
 GROWTH_EVERY_DAYS = 30  # layer A looks back about once a month
+FORGOTTEN_MOOD = "（那天的心情记不太清了）"
 
 
 def strongest(notes: list[tuple[str, int]], n: int) -> list[tuple[str, int]]:
@@ -22,32 +25,72 @@ def strongest(notes: list[tuple[str, int]], n: int) -> list[tuple[str, int]]:
     return sorted(notes, key=lambda x: -x[1])[:n]
 
 
+def _gists_of(night: Night, day: date) -> list[str]:
+    todays = [e for e in night.episodes.recent(EPISODES_LOOKED_AT)
+              if fish_day(datetime.fromisoformat(e.started)) == day and (e.gist or e.summary)]
+    return [e.gist or e.summary[:60] for e in reversed(todays)]
+
+
+def _ask_diary(night: Night, day: date, mood: str, gists: list[str]) -> tuple[str, list[tuple[str, int]], str, list[str] | None]:
+    """Everything the diary of one day is written from, and the reply; nothing is stored here."""
+    conn, store, now, brain = night.conn, night.store, night.now, night.brain
+    start, end = day_bounds(day)
+    threads = [m.line() for m in store.alive("self")][-5:]
+    seen = [m.text for m in store.seen_recently(now, (night.day - day).days + 2)
+            if fish_day(datetime.fromisoformat(m.created)) == day]
+    leisure = [moment_line(m) for m in Pastimes(conn).moments(start, end) if away(m)]
+    home: list[str] | None = None
+    if brain.cottage is not None:  # what she did at home, meals, food gone off (decision 26)
+        try:
+            home = brain.cottage.between(start, end)
+        except ValueError:
+            home = []
+    prev = night.phases.current()
+    text, notes, line = night.thinker.diary(day.isoformat(), mood, threads, gists,
+                                            Diary(conn).before(day.isoformat()), seen=seen, phase_line=prev.line,
+                                            tone_word=prev.tone_word, drive_word=prev.drive_word,
+                                            leisure=leisure, home=home)
+    if not text and "diary" not in night.thinker.failed:  # a reply with no diary in it
+        night.thinker.failed.append("diary")
+    return text, notes, line, home
+
+
+def catch_up(night: Night) -> None:
+    """4a. Days this past week they talked and an earlier night wrote no diary or letter. Only
+    the words: her threads and the phase belong to the day they are written, and her mood that
+    day is gone. Not while the model is failing tonight: the next night will try."""
+    if not night.thinker or night.thinker.failed:
+        return
+    diary, room = Diary(night.conn), night.brain.cottage
+    done: list[str] = []
+    for day in chat_days(night.conn, night.day):
+        if len(done) >= CATCH_UP_PER_NIGHT or night.thinker.failed:
+            break
+        text, gists = diary.get(day.isoformat()), _gists_of(night, day)
+        wrote = False
+        if not text:
+            text = _ask_diary(night, day, FORGOTTEN_MOOD, gists)[0]
+            if not text:
+                break
+            diary.write(day.isoformat(), text)
+            wrote = True
+        if room is not None and not room.letter(day):
+            wrote = _write_letter_of(night, day, FORGOTTEN_MOOD, gists, text) or wrote
+        if wrote:
+            done.append(day.isoformat())
+    if done:
+        night.report["caught_up"] = done
+
+
 def write_diary(night: Night) -> None:
-    conn, store, day, now, brain = night.conn, night.store, night.day, night.now, night.brain
+    conn, store, day, now = night.conn, night.store, night.day, night.now
     first = first_message_at(conn)
     born = fish_day(first) if first else None
     if not (night.thinker and born is not None and day >= born):
         return
     diary = Diary(conn)
-    todays = [e for e in night.episodes.recent(20)
-              if fish_day(datetime.fromisoformat(e.started)) == day and (e.gist or e.summary)]
-    gists = [e.gist or e.summary[:60] for e in reversed(todays)]
-    threads = [m.line() for m in store.alive("self")][-5:]
-    yesterday = next((t for d, t in diary.recent(1) if d < day.isoformat()), "")
-    seen_today = [m.text for m in store.seen_recently(now, 2)
-                  if fish_day(datetime.fromisoformat(m.created)) == day]
-    leisure = [moment_line(m) for m in Pastimes(conn).moments(night.day_start, night.day_end) if away(m)]
-    home: list[str] | None = None
-    if brain.cottage is not None:  # what she did at home, meals, food gone off (decision 26)
-        try:
-            home = brain.cottage.between(night.day_start, night.day_end)
-        except ValueError:
-            home = []
-    prev = night.phases.current()
-    text, notes, line = night.thinker.diary(day.isoformat(), night.moods.load().describe(), threads, gists,
-                                            yesterday, seen=seen_today, phase_line=prev.line,
-                                            tone_word=prev.tone_word, drive_word=prev.drive_word,
-                                            leisure=leisure, home=home)
+    gists = _gists_of(night, day)
+    text, notes, line, home = _ask_diary(night, day, night.moods.load().describe(), gists)
     if not text:
         return
     night.line, night.diary_text, night.gists = line, text, gists
@@ -65,18 +108,26 @@ def write_letter(night: Night) -> None:
     brain = night.brain
     if not (night.thinker and night.diary_text and brain is not None and brain.cottage is not None):
         return
-    room = brain.cottage
-    try:
-        home = room.between(night.day_start, night.day_end)
-        peeked = room.peeked(night.day_start, night.day_end)
-    except ValueError:
-        return
-    text = night.thinker.letter(night.day.isoformat(), night.moods.load().describe(), night.gists, home,
-                                night.diary_text, yesterday=room.letter(night.day - timedelta(days=1)),
-                                peeked=peeked)
-    if text:
-        room.put_letter(night.day, text)
+    if _write_letter_of(night, night.day, night.moods.load().describe(), night.gists, night.diary_text):
         night.report["letter"] = True
+
+
+def _write_letter_of(night: Night, day: date, mood: str, gists: list[str], diary_text: str) -> bool:
+    room = night.brain.cottage
+    start, end = day_bounds(day)
+    try:
+        home = room.between(start, end)
+        peeked = room.peeked(start, end)
+    except ValueError:
+        return False
+    text = night.thinker.letter(day.isoformat(), mood, gists, home, diary_text,
+                                yesterday=room.letter(day - timedelta(days=1)), peeked=peeked)
+    if not text:
+        if "letter" not in night.thinker.failed:
+            night.thinker.failed.append("letter")
+        return False
+    room.put_letter(day, text)
+    return True
 
 
 def step_phase(night: Night) -> None:

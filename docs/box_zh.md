@@ -28,7 +28,7 @@
 | 让她现在就逛一次 | `ssh box 'cd Dafeiyu && .venv/bin/python -m fish browse'`（手动的，一天一次，第二次跳过；平时她想逛才逛） |
 | 微信说过期了，重扫码 | 先 `ssh box systemctl --user stop dafeiyu-wechat`，再 `ssh -t box 'cd Dafeiyu && .venv/bin/python -m fish wechat login'`（二维码画在 Mac 的终端里），再 `ssh box systemctl --user start dafeiyu-wechat` |
 | 导出她的记忆给试算脚本（`scripts/memory_v2_trial.py`，只读） | 在 box 上 `cd Dafeiyu && .venv/bin/python -c "import json; from dataclasses import asdict; from fish.config import load_settings; from fish.storage import connect; from fish.memory import MemoryStore; c = connect(load_settings().db_path); print(json.dumps({'memories': [asdict(m) for m in MemoryStore(c).alive()], 'episodes': [dict(r) for r in c.execute('SELECT id, started, ended, gist, importance, valence FROM episodes')]}, ensure_ascii=False))" > her_memories.json`，再 scp 到 Mac |
-| 备份她的记忆到 Mac | `rsync -az box:Dafeiyu/data/ ~/Dafeiyu/backups/$(date +%F)/` |
+| 备份她到 Mac | 自动的，大约一天一份，在 `backups/auto/`（决定 53）；现在就要一份：`yu backup`；装定时：`scripts/backup_box.sh --install`（Mac 上跑一次）；日志 `backups/auto/backup.log` |
 | 停掉她 | `ssh box systemctl --user stop dafeiyu-wechat` |
 | 不让她先开口 / 给每天加上限 | box 的 `~/Dafeiyu/.env` 里加 `FISH_REACH_OUT=0` 或 `FISH_REACH_MAX=2`（默认 0 = 不限，决定 30），然后 `systemctl --user restart dafeiyu-wechat` |
 | 送她表情包 | 攒进 Mac 上一个文件夹，`scripts/fish.sh stickers ~/某个文件夹`：只传图片，她当场一张张看、起叫法收进相册，相册里已有的同一张不重复收；一张问一次模型。也可以 `scp` 进 `Dafeiyu/data/stickers/inbox/` 等她夜里看（一晚最多 10 张），或者直接在微信里发给她，她觉得好玩会自己留 |
@@ -47,4 +47,6 @@
 - **服务起不来：** `journalctl --user -u dafeiyu-wechat -n 50`。常见：`.env` 没拷（`DEEPSEEK_API_KEY is empty`）、`data/wechat.json` 没拷（`还没绑微信`）。
 - **开机后服务没起：** `loginctl show-user young -p Linger` 要是 `yes`；不是就 `sudo loginctl enable-linger young`（要密码，用户自己敲）。
 - **box 重装或换机器：** 把 `data/` 整个拷过去就是她本人；代码重新 push 一遍。
+- **寝室机的数据坏了或丢了，从备份恢复：** 先 `ssh box systemctl --user stop dafeiyu-wechat`，把现在的 `data/` 改名留着（`ssh box mv Dafeiyu/data Dafeiyu/data.broken`），再 `rsync -az backups/auto/要用的那份/ box:Dafeiyu/data/`，然后 `ssh box systemctl --user start dafeiyu-wechat`。先用 `scripts/snapshot_db.py --check backups/auto/那份/fish.db` 看它有几条聊天。`.env` 不在备份里，Mac 上有一份，抄过去后删掉 `BOX=` 那行。
+- **`yu` 最上面出现带"！"的话：** 是夜里没做成的事、硬盘快满或备份太旧（决定 53）。写"下一晚会补"的不用管；写"得查"的看 `journalctl --user -u dafeiyu-nightly`。
 - **想把她搬回 Mac：** box 上停服务，`rsync` 把 `data/` 拉回来，Mac 上跑 `fish wechat`。

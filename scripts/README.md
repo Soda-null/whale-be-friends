@@ -18,5 +18,7 @@
 | `../install.ps1` | Windows 的一键安装：拿代码（没 git / Python 会问要不要用 winget 装）、建 `.venv`、问 key 和他还是她写 `.env`（不写 TZ，跟电脑时钟走）、自检、扫码绑微信、在任务计划程序里建两个自己用户下的任务（登录就启动的微信、每天 03:30 的整理）；`update`、`uninstall` | 新用户；README 里那一行 |
 | `windows/run_hidden.pyw` | Windows 上任务计划程序用 `pythonw` 跑它：没有窗口地跑 `fish wechat` / `fish nightly`，输出写 `data/logs/`，微信崩了 30 秒后自己再起来 | `install.ps1` 装 |
 | `../install.sh` | 一键安装（仓库根目录）：拿代码、建 `.venv`、问 key / 时区 / 他还是她写 `.env`、自检、扫码绑微信、装开机自启（Linux systemd 用户服务 / macOS launchd）；`update`、`uninstall` | 新用户；`curl … \| bash` 或 `./install.sh` |
+| `backup_box.sh` | 把寝室机上的她拷到 Mac（决定 53）：不带参数现在备份，`--auto` 不到 20 小时跳过，`--check` 超过 3 天才说话（`yu` 每次跑），`--install` / `--uninstall` 装或停 launchd 定时；在 `backups/auto/`，留 30 份 | launchd 自动；`yu backup` 手动 |
+| `snapshot_db.py` | 她在跑也能安全拷数据库，拷完检查；`--check 文件` 查一份备份打不打得开、有几条聊天 | `backup_box.sh` 调用 |
 | `deploy_box.sh` | 把她推到寝室 Ubuntu 机：push 代码、装 venv、装服务文件和时区；`--with-data` 搬记忆（只在搬家时）、`--start` 启动、`--restart` 改完代码重启 | Mac 上，`docs/box_zh.md` |
 | `systemd/` | box 上的服务文件：`dafeiyu-wechat.service`（常驻）、`dafeiyu-nightly.service` + `.timer`（每天 03:30）；原来的 `dafeiyu-browse` 决定 24 撤了，两个脚本会清掉旧的 | `install.sh` 和 `deploy_box.sh` 装（路径换成实际文件夹） |

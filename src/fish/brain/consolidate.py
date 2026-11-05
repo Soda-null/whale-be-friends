@@ -1,11 +1,14 @@
 """The night's model calls (docs/memory_design_zh.md §5.4): merge duplicates, spot
 contradictions, rewrite often-repeated things as gists (decision 20), reflect, write her diary. Each is one call that returns JSON; a bad reply
-means "do nothing tonight", never an exception, so the mechanical steps still run. A rewrite
-that holds a secret (memory.scrub) is dropped; the diary loses such a sentence when written.
+means "do nothing tonight", never an exception, so the mechanical steps still run. It is tried
+again first, and if it still fails its name goes in `failed` for the next night (decision 53). A
+rewrite that holds a secret (memory.scrub) is dropped; the diary loses such a sentence when written.
 """
 
 from __future__ import annotations
 
+import sys
+import time
 from dataclasses import dataclass
 
 from fish.brain.llm import LLM
@@ -18,6 +21,8 @@ DIARY_MAX_CHARS = 120
 LETTER_MAX_CHARS = 600  # her letter, for the drawer (decision 39)
 INSIGHT_IMPORTANCE = (6, 8)
 SELF_NOTE_IMPORTANCE = (3, 5)
+ASK_TRIES = 3  # once one call has failed for good tonight, the rest get one try: the model is down
+ASK_WAIT_SECONDS = 10.0  # before the second try; twice that before the third
 
 
 def _clamp(v, lo: int, hi: int, default: int) -> int:
@@ -56,16 +61,29 @@ class Consolidator:
     def __init__(self, llm: LLM, persona: str) -> None:
         self.llm = llm
         self.persona = persona
+        self.failed: list[str] = []  # the calls that got nothing usable tonight
 
     def _ask(self, template: str, *, temperature: float = 0.5, max_tokens: int = 800,
              **fields: str) -> dict | None:
         content = render(load_template(template), **fields)
-        try:
-            raw = self.llm.chat([{"role": "user", "content": content}], json_mode=True,
-                                temperature=temperature, max_tokens=max_tokens)
-        except Exception:  # noqa: BLE001 - the night must go on without the model
-            return None
-        return extract_json(raw)
+        tries = 1 if self.failed else ASK_TRIES
+        problem = ""
+        for attempt in range(tries):
+            if attempt:
+                time.sleep(ASK_WAIT_SECONDS * attempt)
+            try:
+                raw = self.llm.chat([{"role": "user", "content": content}], json_mode=True,
+                                    temperature=temperature, max_tokens=max_tokens)
+            except Exception as e:  # noqa: BLE001 - the night must go on without the model
+                problem = f"{type(e).__name__}: {e}"[:200]
+                continue
+            data = extract_json(raw)
+            if data is not None:
+                return data
+            problem = "the reply was not JSON"
+        self.failed.append(template)
+        print(f"night: {template} failed after {tries} tries: {problem}", file=sys.stderr, flush=True)
+        return None
 
     def merge_pairs(self, pairs: list[tuple[Memory, Memory]]) -> list[Merge]:
         if not pairs:

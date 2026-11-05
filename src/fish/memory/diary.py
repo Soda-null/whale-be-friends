@@ -18,6 +18,18 @@ class Diary:
         )
         self.conn.commit()
 
+    def days(self) -> set[str]:
+        return {r["day"] for r in self.conn.execute("SELECT day FROM diary")}
+
+    def get(self, day: str) -> str:
+        row = self.conn.execute("SELECT text FROM diary WHERE day = ?", (day,)).fetchone()
+        return row["text"] if row else ""
+
+    def before(self, day: str) -> str:
+        """The latest diary written for a day before this one; "" if none."""
+        row = self.conn.execute("SELECT text FROM diary WHERE day < ? ORDER BY day DESC LIMIT 1", (day,)).fetchone()
+        return row["text"] if row else ""
+
     def recent(self, days: int = 3) -> list[tuple[str, str]]:
         rows = self.conn.execute(
             "SELECT day, text FROM diary ORDER BY day DESC LIMIT ?", (days,)
