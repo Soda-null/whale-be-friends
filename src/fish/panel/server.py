@@ -33,7 +33,9 @@ BACKUP_NAME = re.compile(r"^(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})\d{2}$")
 NEXT_TIME = re.compile(r"\d{4}-(\d{2}-\d{2}) (\d{2}:\d{2})")
 PAGE = Path(__file__).with_name("page.html")
 REPO = Path(__file__).resolve().parents[3]
-CSP = ("default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; "
+IMAGES = Path(__file__).with_name("img")
+IMAGE_PATH = re.compile(r"^/img/([a-z_]+\.webp)$")
+CSP = ("default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; img-src 'self'; "
        "base-uri 'none'; form-action 'none'; frame-ancestors 'none'")
 UNREACHABLE = "连不上她那台机器。电脑是不是不在能连到它的网络上？"
 
@@ -153,11 +155,11 @@ def make_server(box: Box, port: int = 0) -> ThreadingHTTPServer:
         def log_message(self, *args) -> None:  # his activity stays out of any log
             pass
 
-        def _send(self, status: int, body: bytes, kind: str) -> None:
+        def _send(self, status: int, body: bytes, kind: str, cache: str = "no-store") -> None:
             self.send_response(status)
             self.send_header("Content-Type", kind)
             self.send_header("Content-Length", str(len(body)))
-            self.send_header("Cache-Control", "no-store")
+            self.send_header("Cache-Control", cache)
             self.send_header("X-Content-Type-Options", "nosniff")
             self.send_header("Content-Security-Policy", CSP)
             self.end_headers()
@@ -189,6 +191,9 @@ def make_server(box: Box, port: int = 0) -> ThreadingHTTPServer:
             self.server.last_seen = time.monotonic()
             if url.path == "/":
                 return self._send(200, page.encode(), "text/html; charset=utf-8")
+            image = IMAGE_PATH.match(url.path)
+            if image and (IMAGES / image[1]).is_file():  # the same pictures the public README shows
+                return self._send(200, (IMAGES / image[1]).read_bytes(), "image/webp", "max-age=86400")
             if url.path == "/api/ping":  # no token: says only that this is the panel
                 return self._json(200, {"app": "fish-panel"})
             if not self._allowed():

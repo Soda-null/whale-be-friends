@@ -165,6 +165,15 @@ def test_the_page_loads_nothing_from_outside_and_has_no_html_from_data(panel):
     assert "innerHTML" not in page and "https://" not in page and "http://" not in page.replace("http://www.w3.org", "")
 
 
+def test_her_pictures_are_served_and_nothing_else_is(panel):
+    call, _, _, _ = panel
+    for name in ("hero", "her", "whale", "rice", "book", "flower", "goldfish"):
+        reply, body = call("GET", f"/img/{name}.webp")
+        assert reply.status == 200 and body[:4] == b"RIFF" and reply.getheader("Content-Type") == "image/webp"
+    for bad in ("/img/../server.py", "/img/%2e%2e/server.py", "/img/app_icon.png", "/img/nope.webp", "/page.html"):
+        assert call("GET", bad)[0].status == 403 or call("GET", bad)[0].status == 404
+
+
 def test_life_and_memories_arrive(panel):
     call, token, _, _ = panel
     life = json.loads(call("GET", "/api/life?days=7", token=token)[1])

@@ -4,84 +4,143 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>大肥鱼</title>
+<link rel="icon" href="/img/whale.webp">
 <style>
+/* Colours come from her picture: her whale-blue hair, the sky over the lake, the cream sweater, the honey of the sill. */
 :root {
-  --paper: #f5f1e8; --card: #fffdf8; --ink: #2b2a26; --soft: #6f6b60; --line: #e4dccb;
-  --lake: #1f6580; --lake-soft: #dcebef; --warn: #9a4b16; --warn-soft: #fbead8; --good: #3d7d4f; --bad: #b0412f;
+  --sky: #dbe6fd; --sky-low: #f1f4fe; --cream: #fdf6e9;
+  --card: rgba(255, 253, 248, .9); --card-edge: #ffffff; --shade: rgba(68, 98, 234, .13);
+  --ink: #27325c; --soft: #636d98; --line: #e3e6f5;
+  --whale: #4462ea; --on-whale: #ffffff; --hair: #7f95e6; --hair-soft: #e4e9fd;
+  --honey: #e2a457; --honey-soft: #fbeed7; --honey-ink: #8d5a17;
+  --warn: #93500f; --warn-soft: #fff0d8; --good: #3f8a58; --bad: #c8502b;
+  --field: #ffffff; --hero-ink: #222c55; --hero-soft: #3f4c7e; --hero-dim: 1;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper: #16191b; --card: #1f2427; --ink: #e8e5dd; --soft: #a3a097; --line: #30373b;
-    --lake: #7cc0d8; --lake-soft: #1f3640; --warn: #efb27c; --warn-soft: #3a2a1b; --good: #7fc191; --bad: #e68a7a;
+    --sky: #161c38; --sky-low: #1a2142; --cream: #12172e;
+    --card: rgba(36, 44, 82, .9); --card-edge: #333d6b; --shade: rgba(0, 0, 0, .3);
+    --ink: #e9edff; --soft: #aab3da; --line: #36406f;
+    --whale: #93a8ff; --on-whale: #141a35; --hair: #93a8ff; --hair-soft: #2d3768;
+    --honey: #e8b574; --honey-soft: #3f3423; --honey-ink: #f0c98f;
+    --warn: #f5c48c; --warn-soft: #43321e; --good: #82cb98; --bad: #f09a7c;
+    --field: #1c2346; --hero-ink: #ffffff; --hero-soft: #dfe5ff; --hero-dim: .58;
   }
 }
 * { box-sizing: border-box; }
-html { background: var(--paper); }
-body { margin: 0; color: var(--ink); background: var(--paper);
-  font: 15px/1.65 -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; }
-header { position: sticky; top: 0; z-index: 2; background: var(--paper); border-bottom: 1px solid var(--line); }
-.bar { max-width: 1040px; margin: 0 auto; padding: 12px 20px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; }
-.name { font-size: 19px; font-weight: 650; letter-spacing: .02em; }
+html { background: var(--cream); }
+body { margin: 0; min-height: 100vh; color: var(--ink);
+  background: linear-gradient(180deg, var(--sky) 0, var(--sky-low) 340px, var(--cream) 900px) no-repeat, var(--cream);
+  font: 15px/1.7 -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; }
+.round { font-family: "Yuanti SC", "Hiragino Maru Gothic ProN", "PingFang SC", -apple-system, sans-serif; }
+
+header { position: sticky; top: 0; z-index: 3; background: color-mix(in srgb, var(--sky-low) 82%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+.bar { max-width: 1120px; margin: 0 auto; padding: 10px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand img { width: 40px; height: 40px; border-radius: 50%; box-shadow: 0 0 0 2px var(--card-edge), 0 3px 10px var(--shade); }
+.name { font-size: 21px; font-weight: 700; letter-spacing: .04em; }
+nav { display: flex; gap: 4px; overflow-x: auto; padding: 2px; }
+nav button { background: none; border: 0; color: var(--soft); font: inherit; font-weight: 500; padding: 5px 16px; border-radius: 99px; cursor: pointer; white-space: nowrap; transition: background .15s, color .15s; }
+nav button:hover { background: var(--hair-soft); color: var(--ink); }
+nav button[aria-current="page"] { background: var(--whale); color: var(--on-whale); font-weight: 600; }
 .clock { color: var(--soft); font-size: 13px; margin-left: auto; font-variant-numeric: tabular-nums; }
-nav { flex-basis: 100%; display: flex; gap: 2px; overflow-x: auto; }
-nav button { background: none; border: 0; border-bottom: 2px solid transparent; color: var(--soft); font: inherit;
-  padding: 7px 12px; cursor: pointer; white-space: nowrap; border-radius: 0; }
-nav button:hover { color: var(--ink); }
-nav button[aria-current="page"] { color: var(--lake); border-bottom-color: var(--lake); font-weight: 600; }
-main { max-width: 1040px; margin: 0 auto; padding: 18px 20px 48px; }
-.alert { background: var(--warn-soft); color: var(--warn); border-radius: 8px; padding: 9px 13px; margin-bottom: 10px; }
-.columns { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 16px; align-items: start; }
-.stack { display: grid; gap: 16px; min-width: 0; }
-.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 15px 18px; min-width: 0; }
-h2 { font-size: 13px; color: var(--soft); font-weight: 600; margin: 0 0 8px; letter-spacing: .03em; }
-.mood { font-size: 24px; line-height: 1.4; font-weight: 600; }
-.phase { color: var(--soft); margin-top: 4px; }
+
+main { max-width: 1120px; margin: 0 auto; padding: 12px 24px 56px; }
+.hero { position: relative; border-radius: 26px; overflow: hidden; min-height: 330px; margin-bottom: 18px; box-shadow: 0 10px 34px var(--shade); background: var(--hair-soft); }
+.hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 100% 62%; filter: brightness(var(--hero-dim)); }
+.hero-words { position: relative; max-width: 54%; padding: 30px 34px; color: var(--hero-ink); }
+.hero-label { font-size: 13px; font-weight: 600; letter-spacing: .1em; color: var(--hero-soft); }
+.mood { font-size: clamp(26px, 3.3vw, 38px); line-height: 1.32; font-weight: 700; margin-top: 6px; }
+.phase { color: var(--hero-soft); margin-top: 9px; max-width: 26em; }
+
+.alert { display: flex; gap: 10px; align-items: flex-start; background: var(--warn-soft); color: var(--warn); border-radius: 14px; padding: 9px 15px; margin-bottom: 12px; font-weight: 500; }
+.alert::before { content: "✦"; flex: none; }
+.columns { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.stack { display: grid; gap: 18px; min-width: 0; }
+.card { background: var(--card); border: 1px solid var(--card-edge); border-radius: 22px; padding: 18px 22px 20px; min-width: 0; box-shadow: 0 6px 22px var(--shade); }
+.card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.card-head img { width: 38px; height: 38px; border-radius: 50%; flex: none; box-shadow: 0 0 0 1px var(--line); }
+h2 { font-size: 17px; font-weight: 700; margin: 0; line-height: 1.35; }
+.head-side { margin-left: auto; flex: none; }
 ul { list-style: none; margin: 0; padding: 0; }
-.plain li { padding: 4px 0; overflow-wrap: anywhere; }
-.plain li + li { border-top: 1px solid var(--line); }
-.timed li { display: grid; grid-template-columns: 5.5em minmax(0, 1fr); gap: 8px; padding: 3px 0; }
-.timed .when { color: var(--soft); font-variant-numeric: tabular-nums; }
-.timed span { overflow-wrap: anywhere; min-width: 0; }
-.diary li { grid-template-columns: 6.3em minmax(0, 1fr); }
+.plain li { padding: 7px 0; overflow-wrap: anywhere; }
+.plain li + li { border-top: 1px dashed var(--line); }
+
+.timeline li { position: relative; display: grid; grid-template-columns: 3.4em minmax(0, 1fr); gap: 20px; padding: 5px 0; }
+.timeline li::before { content: ""; position: absolute; left: calc(3.4em + 6px); top: 14px; width: 9px; height: 9px; border-radius: 50%; background: var(--hair); box-shadow: 0 0 0 3px var(--hair-soft); }
+.timeline li::after { content: ""; position: absolute; left: calc(3.4em + 10px); top: 26px; bottom: -11px; border-left: 2px dashed var(--line); }
+.timeline li:last-child::after { display: none; }
+.when { color: var(--soft); font-variant-numeric: tabular-nums; }
+.timeline .what, .dated .what { overflow-wrap: anywhere; min-width: 0; }
+
+.dated li { display: grid; grid-template-columns: 6.2em minmax(0, 1fr); gap: 10px; padding: 6px 0; }
+.dated li + li { border-top: 1px dashed var(--line); }
+.diary .what { font-family: "Kaiti SC", "STKaiti", "KaiTi", -apple-system, sans-serif; font-size: 17px; line-height: 1.6; }
+.diary-card { background: linear-gradient(180deg, var(--honey-soft), var(--card) 130px); }
+
 .empty { color: var(--soft); }
-.pairs { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 3px 12px; margin: 0 0 12px; }
+.note { color: var(--soft); font-size: 13px; margin-top: 8px; }
+.pairs { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 14px; margin: 0 0 12px; }
 .pairs dt { color: var(--soft); }
 .pairs dd { margin: 0; overflow-wrap: anywhere; }
-textarea, input[type=search], input[type=text], select { width: 100%; font: inherit; color: var(--ink); background: var(--paper);
-  border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
-select { width: auto; padding: 3px 8px; }
-textarea { resize: vertical; min-height: 66px; }
-textarea:focus, input:focus, select:focus, button:focus-visible { outline: 2px solid var(--lake); outline-offset: 1px; }
-.do { margin-top: 8px; background: var(--lake); color: var(--card); border: 0; border-radius: 8px; padding: 7px 15px; font: inherit; font-weight: 600; cursor: pointer; }
-.do:hover { filter: brightness(1.08); }
-.do:disabled { opacity: .55; cursor: wait; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
-.chip { background: var(--lake-soft); color: var(--lake); border: 0; border-radius: 99px; padding: 2px 11px; font: inherit; font-size: 13px; cursor: pointer; }
-.chip[aria-pressed="true"] { background: var(--lake); color: var(--card); }
-.note { color: var(--soft); font-size: 13px; margin-top: 6px; }
-.said { margin-top: 8px; padding: 7px 10px; border-left: 3px solid var(--lake); background: var(--lake-soft); border-radius: 0 6px 6px 0; overflow-wrap: anywhere; white-space: pre-line; }
-.said.bad { border-left-color: var(--bad); color: var(--bad); background: var(--warn-soft); }
-.head-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; }
-.head-row h2 { margin: 0; }
-.tools { display: grid; gap: 9px; margin-bottom: 8px; }
-.memory { padding: 8px 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; white-space: pre-line; }
-.memory .tag { font-size: 12px; color: var(--soft); margin-top: 1px; }
-.faded { opacity: .62; }
-.bars { display: grid; grid-template-columns: auto minmax(0, 1fr) 2.2em; gap: 4px 10px; align-items: center; margin-top: 10px; font-size: 13px; color: var(--soft); }
-.track { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
-.fill { height: 100%; background: var(--lake); }
-.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; background: var(--bad); }
-.dot.on { background: var(--good); }
-.big { font-size: 18px; font-weight: 600; }
-pre { white-space: pre-wrap; overflow-wrap: anywhere; font: 13px/1.7 ui-monospace, "SF Mono", Menlo, "PingFang SC", monospace; margin: 0; }
-@media (max-width: 760px) { .columns { grid-template-columns: minmax(0, 1fr); } .bar, main { padding-left: 16px; padding-right: 16px; } }
+textarea, input[type=search], select { width: 100%; font: inherit; color: var(--ink); background: var(--field); border: 1.5px solid var(--line); border-radius: 14px; padding: 9px 13px; }
+input[type=search] { border-radius: 99px; padding-left: 17px; }
+select { width: auto; padding: 3px 10px; border-radius: 99px; font-size: 13px; }
+textarea { resize: vertical; min-height: 70px; display: block; }
+textarea::placeholder, input::placeholder { color: var(--soft); }
+textarea:focus, input:focus, select:focus, button:focus-visible { outline: 2px solid var(--whale); outline-offset: 1px; }
+.do { margin-top: 10px; background: var(--whale); color: var(--on-whale); border: 0; border-radius: 99px; padding: 7px 20px; font: inherit; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px var(--shade); transition: transform .12s, filter .12s; }
+.do:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.do:disabled { opacity: .55; cursor: wait; transform: none; }
+.chips { display: flex; flex-wrap: wrap; gap: 7px; margin: 0 0 11px; }
+.chip { background: var(--honey-soft); color: var(--honey-ink); border: 0; border-radius: 99px; padding: 3px 13px; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
+.chip:hover { filter: brightness(.97); }
+.chip.state { background: var(--hair-soft); color: var(--ink); }
+.chip.state[aria-pressed="true"] { background: var(--whale); color: var(--on-whale); }
+.said { margin-top: 11px; padding: 8px 13px; background: var(--hair-soft); border-radius: 14px; overflow-wrap: anywhere; white-space: pre-line; }
+.said.bad { color: var(--bad); background: var(--warn-soft); }
+.row-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 8px 0 14px; color: var(--soft); }
+
+.tools { display: grid; gap: 10px; margin-bottom: 4px; }
+.memory { padding: 11px 0; border-top: 1px dashed var(--line); overflow-wrap: anywhere; white-space: pre-line; }
+.memory:first-child { border-top: 0; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; white-space: normal; }
+.tag { font-size: 12px; line-height: 1.6; padding: 0 9px; border-radius: 99px; background: var(--hair-soft); color: var(--ink); }
+.tag.pinned { background: var(--honey-soft); color: var(--honey-ink); }
+.tag.quiet { background: none; color: var(--soft); padding-left: 0; }
+.faded { opacity: .6; }
+.portrait { display: flex; gap: 16px; align-items: center; }
+.portrait img { width: 92px; height: 92px; border-radius: 50%; flex: none; box-shadow: 0 0 0 3px var(--card-edge), 0 6px 16px var(--shade); }
+.portrait-words { font-size: 18px; font-weight: 700; line-height: 1.4; }
+.bars { display: grid; grid-template-columns: auto minmax(0, 1fr) 2em; gap: 6px 10px; align-items: center; margin-top: 14px; font-size: 13px; color: var(--soft); }
+.track { height: 8px; border-radius: 4px; background: var(--hair-soft); overflow: hidden; }
+.fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--hair), var(--whale)); }
+.dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 9px; background: var(--bad); }
+.dot.on { background: var(--good); box-shadow: 0 0 0 4px color-mix(in srgb, var(--good) 22%, transparent); }
+.big { font-size: 20px; font-weight: 700; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; font: 13px/1.75 ui-monospace, "SF Mono", Menlo, "PingFang SC", monospace; margin: 0; }
+.review-points { display: grid; gap: 7px; margin-bottom: 8px; }
+.review-points div { background: var(--honey-soft); color: var(--honey-ink); border-radius: 12px; padding: 5px 13px; overflow-wrap: anywhere; }
+.waiting { display: grid; place-items: center; gap: 8px; padding: 90px 0; color: var(--soft); }
+.waiting img { width: 88px; height: 88px; border-radius: 50%; animation: bob 2.2s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translateY(-9px); } }
+@media (prefers-reduced-motion: reduce) { .waiting img { animation: none; } .do, nav button { transition: none; } }
+@media (max-width: 800px) {
+  .columns { grid-template-columns: minmax(0, 1fr); }
+  .bar, main { padding-left: 16px; padding-right: 16px; }
+  nav { order: 3; flex-basis: 100%; }
+  .hero { min-height: 0; background: var(--card); }
+  .hero img { position: static; height: 190px; object-position: 92% 60%; display: block; }
+  .hero-words { max-width: none; padding: 16px 20px 20px; color: var(--ink); }
+  .hero-label, .phase { color: var(--soft); }
+}
 </style>
 </head>
 <body>
 <header><div class="bar">
-  <div class="name">大肥鱼</div>
-  <div class="clock" id="clock"></div>
+  <div class="brand"><img src="/img/her.webp" alt=""><div class="name round">大肥鱼</div></div>
   <nav id="tabs"></nav>
+  <div class="clock" id="clock"></div>
 </div></header>
 <main id="main"></main>
 <script>
@@ -91,6 +150,7 @@ const main = document.getElementById("main");
 const clock = document.getElementById("clock");
 let current = "today", diaryDays = 5, reviewDays = 7, memoryFilter = "全部", memorySearch = "", memoryData = null, busy = false;
 let roomSaid = "";  // what the room just answered, kept across the redraw that shows the room as it is now
+let lastToday = "";  // what "today" last drew: an unchanged answer is not drawn again
 
 // Everything shown goes in as text, never as HTML: her memories hold words from the web.
 function el(tag, className, ...children) {
@@ -99,14 +159,22 @@ function el(tag, className, ...children) {
   for (const child of children) if (child !== null && child !== undefined) node.append(child);
   return node;
 }
-function card(title, ...children) { return el("section", "card", title ? el("h2", "", title) : null, ...children); }
-function list(items, className) { return el("ul", className || "plain", ...items.map(x => el("li", "", x))); }
-function timed(items, extra) {
-  return el("ul", "timed " + (extra || ""), ...items.map(x => el("li", "", el("span", "when", x.when), el("span", "", x.text))));
+function img(name) { const i = el("img"); i.src = `/img/${name}.webp`; i.alt = ""; return i; }
+function head(icon, title, side) {
+  return el("div", "card-head", icon ? img(icon) : null, el("h2", "round", title), side ? el("div", "head-side", side) : null);
+}
+function card(icon, title, ...children) { return el("section", "card", head(icon, title), ...children); }
+function list(items) { return el("ul", "plain", ...items.map(x => el("li", "", x))); }
+function dated(items, extra) {
+  return el("ul", "dated " + (extra || ""), ...items.map(x => el("li", "", el("span", "when", x.when), el("span", "what", x.text))));
+}
+function timeline(items) {
+  return el("ul", "timeline", ...items.map(x => el("li", "", el("span", "when", x.when), el("span", "what", x.text))));
 }
 function empty(words) { return el("div", "empty", words); }
 function said(words, bad) { return el("div", "said" + (bad ? " bad" : ""), words); }
 function button(words, onClick) { const b = el("button", "do", words); b.type = "button"; b.onclick = onClick; return b; }
+function waiting(words) { return el("div", "waiting", img("whale"), el("div", "", words)); }
 
 async function api(path, words) {
   const options = { headers: { "X-Panel-Token": TOKEN } };
@@ -123,12 +191,13 @@ async function api(path, words) {
 
 function showError(message) { main.replaceChildren(el("div", "alert", message)); }
 
-// One form: words in, a button, what came back. `after` redraws what the words changed.
-function sayBox(path, placeholder, label, after, rows) {
+// One form: words in, a button, what came back. `after` says what to show when it worked.
+function sayBox(path, placeholder, label, after) {
   const area = el("textarea");
-  area.rows = rows || 2;
+  area.rows = 2;
   area.placeholder = placeholder;
   area.maxLength = 200;
+  area.setAttribute("aria-label", placeholder);
   const outcome = el("div");
   const send = button(label, async () => {
     const words = area.value.trim();
@@ -138,50 +207,65 @@ function sayBox(path, placeholder, label, after, rows) {
     const reply = await api(path, words);
     send.disabled = false;
     if (reply.ok) area.value = "";
-    outcome.replaceChildren(reply.ok ? said(after ? after(reply.data) : "好了") : said(reply.error, true));
+    outcome.replaceChildren(reply.ok ? said(after(reply.data)) : said(reply.error, true));
   });
   area.addEventListener("keydown", e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) send.click(); });
-  return { area, nodes: [area, send, outcome] };
+  return { area, outcome, nodes: [area, send, outcome] };
 }
 
 function renderStatus(holder, pairs) {
   holder.replaceChildren(el("dl", "pairs", ...pairs.flatMap(p => [el("dt", "", p.name), el("dd", "", p.value)])));
 }
 
+function daySelect(choices, chosen, unit, onChange) {
+  const days = el("select");
+  for (const n of choices) { const o = el("option", "", `最近 ${n} ${unit}`); o.value = n; o.selected = n === chosen; days.append(o); }
+  days.setAttribute("aria-label", "看多少");
+  days.onchange = () => onChange(Number(days.value));
+  return days;
+}
+
 const views = {
-  async today() {
+  async today(quiet) {
     const [life, me] = await Promise.all([api(`/api/life?days=${diaryDays}`), api("/api/me")]);
     if (current !== "today") return;
     if (!life.ok) return showError(life.error);
     const d = life.data;
     clock.textContent = d.at ? `她那边 ${d.at}` : "";
-    const days = el("select");
-    for (const n of [3, 5, 7, 30]) { const o = el("option", "", `最近 ${n} 篇`); o.value = n; o.selected = n === diaryDays; days.append(o); }
-    days.setAttribute("aria-label", "看几篇日记");
-    days.onchange = () => { diaryDays = Number(days.value); show("today"); };
+    const key = JSON.stringify([{ ...d, at: "" }, me]);
+    if (quiet && key === lastToday && !roomSaid) return;
+    lastToday = key;
 
     const status = el("div");
     if (me.ok) renderStatus(status, me.data); else status.append(said(me.error, true));
-    const tell = sayBox("/api/me", "你在干嘛，比如：躺在她沙发上", "告诉她", data => { renderStatus(status, data); return "她知道了（两小时后过期）"; }, 2);
-    const room = sayBox("/api/room", "用大白话说，比如：往冰箱放两盒牛奶", "放进去", lines => { roomSaid = lines.join("\n") || "好了"; setTimeout(refresh); return roomSaid; }, 2);
-    if (roomSaid) { room.nodes[2].append(said(roomSaid)); roomSaid = ""; }
+    const tell = sayBox("/api/me", "你在干嘛，比如：躺在她沙发上", "告诉她", data => { renderStatus(status, data); return "她知道了（两小时后过期）"; });
+    const room = sayBox("/api/room", "用大白话说，比如：往冰箱放两盒牛奶", "放进去", lines => {
+      roomSaid = lines.join("\n") || "好了";
+      setTimeout(refresh);
+      return roomSaid;
+    });
+    if (roomSaid) { room.outcome.append(said(roomSaid)); roomSaid = ""; }
     const chips = el("div", "chips", ...["往冰箱放两盒牛奶", "给米缸添点米", "在窗台放一盆薄荷"].map(words => {
       const c = el("button", "chip", words); c.type = "button"; c.onclick = () => { room.area.value = words; room.area.focus(); }; return c;
     }));
 
     main.replaceChildren(
+      el("section", "hero", img("hero"), el("div", "hero-words",
+        el("div", "hero-label", "她现在"),
+        el("div", "mood round", d.mood || "（没读到心情）"),
+        d.phase ? el("div", "phase", "这阵子：" + d.phase) : null)),
       ...d.alerts.map(a => el("div", "alert", a)),
       el("div", "columns",
         el("div", "stack",
-          card("她现在", el("div", "mood", d.mood || "（没读到心情）"), d.phase ? el("div", "phase", "这阵子：" + d.phase) : null),
-          card("今天", d.today.length ? timed(d.today) : empty("还没什么事"),
+          card("rice", "今天", d.today.length ? timeline(d.today) : empty("还没什么事"),
                d.reading ? el("div", "note", "在读 / 在追：" + d.reading) : null),
-          el("section", "card", el("div", "head-row", el("h2", "", "日记"), days),
-             d.diary.length ? timed(d.diary, "diary") : empty("还没写过"))),
+          el("section", "card diary-card",
+             head("book", "她的日记", daySelect([3, 5, 7, 30], diaryDays, "篇", n => { diaryDays = n; show("today"); })),
+             d.diary.length ? dated(d.diary, "diary") : empty("还没写过"))),
         el("div", "stack",
-          card("你的状态", status, ...tell.nodes),
-          card("她的屋里", d.room.length ? list(d.room) : empty("没读到")),
-          card("往屋里放点、拿点东西", chips, ...room.nodes, el("div", "note", "每次问一次模型，花一点点钱。")))));
+          card("whale", "你的状态", status, ...tell.nodes),
+          card("goldfish", "她的屋里", d.room.length ? list(d.room) : empty("没读到")),
+          card("flower", "往屋里放点、拿点东西", chips, ...room.nodes, el("div", "note", "每次问一次模型，花一点点钱。")))));
   },
 
   async memories() {
@@ -196,13 +280,17 @@ const views = {
     const reply = await api(`/api/review?days=${reviewDays}`);
     if (current !== "review") return;
     if (!reply.ok) return showError(reply.error);
-    const days = el("select");
-    for (const n of [7, 14, 30]) { const o = el("option", "", `最近 ${n} 天`); o.value = n; o.selected = n === reviewDays; days.append(o); }
-    days.setAttribute("aria-label", "看几天");
-    days.onchange = () => { reviewDays = Number(days.value); show("review"); };
-    main.replaceChildren(el("div", "head-row", el("h2", "", "她这段时间到底过得怎么样（只是数数，不调模型）"), days),
-      el("div", "stack", ...reply.data.map(s => card(s.title, s.inline ? el("div", "", s.inline) : null,
-        s.lines.length ? el("pre", "", s.lines.join("\n")) : null))));
+    const icons = ["whale", "rice", "book", "flower", "goldfish"];
+    main.replaceChildren(
+      el("div", "row-head", el("div", "", "她这段时间到底过得怎么样（只是数数，不调模型）"),
+         daySelect([7, 14, 30], reviewDays, "天", n => { reviewDays = n; show("review"); })),
+      el("div", "stack", ...reply.data.map((s, i) => {
+        const points = s.lines.filter(x => /^[!！]/.test(x)).map(x => x.replace(/^[!！]\s*/, ""));
+        const rest = s.lines.filter(x => !/^[!！]/.test(x));
+        return card(icons[i % icons.length], s.title || "复盘", s.inline ? el("div", "", s.inline) : null,
+          points.length ? el("div", "review-points", ...points.map(p => el("div", "", p))) : null,
+          rest.length ? el("pre", "", rest.join("\n")) : null);
+      })));
   },
 
   async machine() {
@@ -221,13 +309,14 @@ const views = {
     });
     main.replaceChildren(el("div", "columns",
       el("div", "stack",
-        card("她在不在线", el("div", "big", el("span", "dot" + (d.online ? " on" : "")), d.online ? "在，微信上能回你" : "不在，她现在回不了微信")),
-        card("夜里整理", el("div", "", d.next_night ? `下一次：${d.next_night}` : "没查到下一次的时间"))),
+        card("whale", "她在不在线", el("div", "big round", el("span", "dot" + (d.online ? " on" : "")), d.online ? "在，微信上能回你" : "不在，她现在回不了微信")),
+        card("book", "夜里整理", el("div", "", d.next_night ? `下一次：${d.next_night}` : "没查到下一次的时间"),
+             el("div", "note", "她每晚写日记、整理记忆。"))),
       el("div", "stack",
-        card("硬盘", el("div", "big", d.free_gb === null ? "没查到" : `还剩 ${d.free_gb} GB`),
+        card("rice", "硬盘", el("div", "big round", d.free_gb === null ? "没查到" : `还剩 ${d.free_gb} GB`),
              el("div", "note", "不到 10 GB 时，“今天”那页最上面会提醒。")),
-        d.has_box ? card("备份到这台电脑",
-          el("div", "big", d.last_backup ? `最新：${d.last_backup}` : "还没有备份"),
+        d.has_box ? card("goldfish", "备份到这台电脑",
+          el("div", "big round", d.last_backup ? `最新：${d.last_backup}` : "还没有备份"),
           el("div", "note", `一共留着 ${d.backups} 份，大约一天自动一份。`), back, outcome) : null)));
   },
 };
@@ -242,9 +331,8 @@ function drawMemories() {
   const results = el("div");
   const counts = {};
   for (const m of d.memories) counts[m.state] = (counts[m.state] || 0) + 1;
-  const states = ["全部", "清楚", "模糊", "想不起", "钉住"];
-  const chips = el("div", "chips", ...states.map(s => {
-    const c = el("button", "chip", s === "全部" ? `全部 ${d.memories.length}` : `${s} ${counts[s] || 0}`);
+  const chips = el("div", "chips", ...["全部", "清楚", "模糊", "想不起", "钉住"].map(s => {
+    const c = el("button", "chip state", s === "全部" ? `全部 ${d.memories.length}` : `${s} ${counts[s] || 0}`);
     c.type = "button";
     c.setAttribute("aria-pressed", String(s === memoryFilter));
     c.onclick = () => { memoryFilter = s; drawMemories(); };
@@ -255,31 +343,33 @@ function drawMemories() {
     const shown = d.memories.filter(m => (memoryFilter === "全部" || m.state === memoryFilter)
       && (!word || m.text.toLowerCase().includes(word)));
     results.replaceChildren(...(shown.length ? shown.map(m => el("div", "memory" + (m.state === "想不起" ? " faded" : ""),
-      m.text, el("div", "tag", `${m.kind} · ${m.state}${m.source ? " · 网上看到的" : ""}`))) : [empty("没有这样的记忆")]));
+      m.text, el("div", "tags", el("span", "tag" + (m.state === "钉住" ? " pinned" : ""), m.state),
+        el("span", "tag quiet", m.kind + (m.source ? " · 网上看到的" : ""))))) : [empty("没有这样的记忆")]));
   }
   search.oninput = () => { memorySearch = search.value; draw(); };
   draw();
   const body = Object.entries(d.body);
   main.replaceChildren(el("div", "columns",
     el("div", "stack",
-      card("她记得的事", el("div", "tools", search, chips), results)),
+      card("book", "她记得的事", el("div", "tools", search, chips), results)),
     el("div", "stack",
-      card("她这个人", el("div", "", d.mood), d.phase ? el("div", "phase", d.phase) : null,
+      el("section", "card", el("div", "portrait", img("her"), el("div", "",
+          el("div", "portrait-words round", d.mood), d.phase ? el("div", "note", d.phase) : null)),
         body.length ? el("div", "bars", ...body.flatMap(([k, v]) => [el("span", "", k),
           (() => { const f = el("div", "fill"); f.style.width = Math.min(100, v) + "%"; return el("div", "track", f); })(),
           el("span", "", String(v))])) : null),
-      card("你们俩", el("div", "", d.relationship), d.traits ? el("div", "note", "底色：" + d.traits) : null,
+      card("whale", "你们俩", el("div", "", d.relationship), d.traits ? el("div", "note", "底色：" + d.traits) : null,
         d.pastimes ? el("div", "note", "两周的空闲：" + d.pastimes) : null),
-      card("她惦记着要问的", d.waiting.length ? timed(d.waiting, "diary") : empty("现在没有")),
-      card("一直记得的", d.profile.length ? list(d.profile) : empty("还没有")),
-      d.howto.length ? card(d.howto_title || "相处的方式", list(d.howto)) : null,
-      card("最近聊过", d.chats.length ? list(d.chats.map(c => c.text)) : empty("还没有")))));
+      card("flower", "她惦记着要问的", d.waiting.length ? dated(d.waiting) : empty("现在没有")),
+      card("rice", "一直记得的", d.profile.length ? list(d.profile) : empty("还没有")),
+      d.howto.length ? card("goldfish", d.howto_title || "相处的方式", list(d.howto)) : null,
+      card("book", "最近聊过", d.chats.length ? list(d.chats.map(c => c.text)) : empty("还没有")))));
 }
 
 const tabs = [["today", "今天"], ["memories", "记忆"], ["machine", "机器"]];
 function drawTabs() {
   document.getElementById("tabs").replaceChildren(...tabs.map(([key, words]) => {
-    const b = el("button", "", words);
+    const b = el("button", "round", words);
     b.type = "button";
     if (key === current) b.setAttribute("aria-current", "page");
     b.onclick = () => show(key);
@@ -289,22 +379,21 @@ function drawTabs() {
 
 async function show(key) {
   current = key;
+  lastToday = "";
   drawTabs();
-  main.replaceChildren(empty("正在问她那边……"));
+  main.replaceChildren(waiting("正在问她那边……"));
   await views[key]();
 }
 
 // Quietly bring "today" up to date, unless he is typing in it.
 async function refresh() {
   if (current !== "today" || document.hidden || busy) return;
-  const active = document.activeElement;
-  if (active && active.tagName === "TEXTAREA" && active.value) return;
   const typed = [...main.querySelectorAll("textarea")].some(t => t.value);
   const pending = main.querySelector("button.do:disabled");
   if (typed || pending) return;
   busy = true;
   const y = window.scrollY;
-  try { await views.today(); window.scrollTo(0, y); } finally { busy = false; }
+  try { await views.today(true); window.scrollTo(0, y); } finally { busy = false; }
 }
 
 (async () => {
