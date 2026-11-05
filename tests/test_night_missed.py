@@ -148,4 +148,4 @@ def test_problems_says_nothing_when_all_is_well_and_speaks_up_when_not(tmp_path)
     conn.execute("INSERT INTO routine_runs (name, last_run) VALUES ('night_failed', '2026-10-25|night.upkeep_x')")
     said = problems(conn, tmp_path, now, disk_free_gb=PLENTY)
     assert "只跑到 2026-10-25" in said[0]
-    assert "程序出错：upkeep_x" in said[1]
+    assert "报错了：upkeep_x" in said[1]

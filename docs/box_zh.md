@@ -48,5 +48,5 @@
 - **开机后服务没起：** `loginctl show-user young -p Linger` 要是 `yes`；不是就 `sudo loginctl enable-linger young`（要密码，用户自己敲）。
 - **box 重装或换机器：** 把 `data/` 整个拷过去就是她本人；代码重新 push 一遍。
 - **寝室机的数据坏了或丢了，从备份恢复：** 先 `ssh box systemctl --user stop dafeiyu-wechat`，把现在的 `data/` 改名留着（`ssh box mv Dafeiyu/data Dafeiyu/data.broken`），再 `rsync -az backups/auto/要用的那份/ box:Dafeiyu/data/`，然后 `ssh box systemctl --user start dafeiyu-wechat`。先用 `scripts/snapshot_db.py --check backups/auto/那份/fish.db` 看它有几条聊天。`.env` 不在备份里，Mac 上有一份，抄过去后删掉 `BOX=` 那行。
-- **`yu` 最上面出现带"！"的话：** 是夜里没做成的事、硬盘快满或备份太旧（决定 53）。写"下一晚会补"的不用管；写"得查"的看 `journalctl --user -u dafeiyu-nightly`。
+- **`yu` 最上面出现带"！"的话：** 是夜里没做成的事、硬盘快满或备份太旧（决定 53）。写"下一晚会补"的不用管；写"报错了"的连着几天都有，就看 `journalctl --user -u dafeiyu-nightly`。
 - **想把她搬回 Mac：** box 上停服务，`rsync` 把 `data/` 拉回来，Mac 上跑 `fish wechat`。
