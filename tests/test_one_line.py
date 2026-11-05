@@ -1,8 +1,10 @@
 """Only one of her on one WeChat (decision 52): a second one stops before it reaches the phone line."""
 
 import os
+import signal
 import subprocess
 import sys
+import time
 
 import pytest
 
@@ -30,17 +32,27 @@ def test_a_second_one_on_this_machine_is_refused_and_told_who_holds_it(tmp_path)
 def test_a_crash_does_not_lock_her_out(tmp_path):
     """Restart=always must bring her back after a crash, with nobody tidying up a file."""
     lock = tmp_path / "wechat.lock"
-    code = ("import sys, time; from pathlib import Path; from fish.channels import hold_the_line\n"
-            "f = hold_the_line('', Path(sys.argv[1])); print('held', flush=True); time.sleep(60)")
+    code = ("import os, sys, time; from pathlib import Path; from fish.channels import hold_the_line\n"
+            "f = hold_the_line('', Path(sys.argv[1])); print(os.getpid(), flush=True); time.sleep(60)")
     other = subprocess.Popen([sys.executable, "-c", code, str(lock)], stdout=subprocess.PIPE, text=True)
+    pid = 0
     try:
-        assert other.stdout.readline().strip() == "held"
-        with pytest.raises(SecondHer, match=str(other.pid)):  # another process: the real case
+        # its own word for its pid: on Windows the venv's python.exe is a launcher, other.pid is that
+        pid = int(other.stdout.readline())
+        with pytest.raises(SecondHer, match=str(pid)):  # another process: the real case
             hold_the_line("", lock)
     finally:
+        if pid:
+            os.kill(pid, getattr(signal, "SIGKILL", signal.SIGTERM))  # no goodbye, no tidying up
         other.kill()
         other.wait()
-    hold_the_line("", lock).close()
+    for _ in range(50):  # Windows lets go a moment after the process is gone
+        try:
+            hold_the_line("", lock).close()
+            return
+        except SecondHer:
+            time.sleep(0.1)
+    pytest.fail("still locked after the holder died")
 
 
 @pytest.mark.parametrize("words", [["wechat"], ["wechat", "login"]])
