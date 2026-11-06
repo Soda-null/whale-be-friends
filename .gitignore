@@ -25,3 +25,6 @@ venv/
 # The fish's memory: private chat data, never committed
 data/
 backups/
+
+# Rendered demo video: large binaries, made by scripts/demo_video/render.py
+scripts/demo_video/out/

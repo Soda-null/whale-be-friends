@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><title>Whale Be Friends demo</title>
+<style>
+  :root { --ink:#27325c; --soft:#636d98; --cream:#fdf6e9; --honey:#fbeed7; --hair:#7f95e6; --hair-soft:#dfe6fd;
+          --tan:#d9b98a; --brown:#6d5236; }
+  * { box-sizing:border-box; margin:0; }
+  html,body { width:1920px; height:1080px; overflow:hidden; background:#000; }
+  body { font-family:"Yuanti SC","PingFang SC",sans-serif; }
+  #stage { position:absolute; inset:0; overflow:hidden; background:#000; }
+  .world { position:absolute; left:0; top:0; transform-origin:0 0; will-change:transform; }
+  .world img, .world canvas, .world .fill { position:absolute; left:0; top:0; width:100%; height:100%; }
+  #dusk  { mix-blend-mode:multiply; background:radial-gradient(ellipse 760px 620px at 1480px 510px,#fff6ee 0%,#ffe6d3 42%,#ffc39c 70%,#f4a48f 100%); }
+  #night { mix-blend-mode:multiply;
+           background:radial-gradient(ellipse 800px 640px at 1470px 470px,#f1ecf6 0%,#aab0e2 40%,#4a54a4 70%,#1d2358 100%); }
+  #glow  { mix-blend-mode:screen;
+           background:
+             radial-gradient(circle 92px at 1556px 150px,rgba(255,185,105,.62),rgba(255,160,80,.16) 50%,transparent 100%),
+             radial-gradient(ellipse 480px 400px at 1520px 420px,rgba(255,170,100,.17),transparent 100%); }
+  #cottageGlow { mix-blend-mode:screen;
+           background:
+             radial-gradient(circle 120px at 818px 195px,rgba(255,200,120,.55),transparent 100%),
+             radial-gradient(circle 80px at 322px 672px,rgba(255,190,110,.4),transparent 100%); }
+  #scrim { position:absolute; inset:0; background:linear-gradient(90deg,rgba(30,38,92,.34),rgba(30,38,92,.1) 38%,transparent 56%); }
+
+  /* phone */
+  #phone { position:absolute; left:110px; top:84px; width:452px; height:912px; border-radius:62px; padding:13px;
+           background:linear-gradient(160deg,#f6f8ff,#cfd9f7); border:3px solid var(--hair);
+           box-shadow:0 34px 90px rgba(28,36,88,.45); }
+  #screen { position:relative; width:100%; height:100%; border-radius:48px; overflow:hidden; background:var(--cream);
+            display:flex; flex-direction:column; }
+  #notch { position:absolute; left:50%; top:10px; width:118px; height:30px; margin-left:-59px; border-radius:16px; background:#3c4678; }
+  #bar { padding:54px 24px 14px; display:flex; align-items:center; gap:13px; border-bottom:2px solid #eee5d3; background:#fffaf0; }
+  #bar img { width:52px; height:52px; border-radius:50%; }
+  #bar b { font-size:30px; color:var(--ink); font-weight:600; }
+  #bar span { display:block; font-size:18px; color:var(--soft); margin-top:2px; }
+  #msgs { flex:1; padding:20px 16px 0; display:flex; flex-direction:column; gap:16px; }
+  .row { position:relative; display:flex; align-items:flex-start; gap:10px; transform-origin:0 50%; }
+  .row.him { justify-content:flex-end; transform-origin:100% 50%; }
+  .row img { width:48px; height:48px; border-radius:50%; flex:none; }
+  .bub { padding:8px 20px 9px; border-radius:22px; font-size:33px; line-height:1.32; color:var(--ink); }
+  .her .bub { background:var(--honey); border-top-left-radius:7px; }
+  .him .bub { background:#cfdcfd; border-top-right-radius:7px; }
+  .dots { position:absolute; left:58px; top:0; padding:16px 18px; border-radius:21px; border-top-left-radius:7px;
+          background:var(--honey); display:flex; gap:7px; }
+  .dots i { width:10px; height:10px; border-radius:50%; background:#c9a877; display:block; }
+  #input { margin:0 16px 24px; height:60px; border-radius:30px; background:#fff; border:2px solid #e7e0d0;
+           display:flex; align-items:center; padding:0 18px; color:#b4b3bd; font-size:21px; }
+  #input svg { margin-left:auto; }
+
+  /* diary */
+  #diary { position:absolute; left:120px; top:180px; width:690px; padding:40px 56px 50px 78px; border-radius:18px;
+           background-color:#fdf7e8; border:2px solid #d9c29c;
+           background-image:repeating-linear-gradient(180deg,transparent 0 73px,rgba(127,149,230,.2) 73px 75px);
+           background-position:0 104px; box-shadow:0 26px 80px rgba(30,20,60,.42), inset 18px 0 22px -18px rgba(120,84,40,.35); }
+  #diary::before { content:""; position:absolute; left:34px; top:0; bottom:0; width:2px; background:rgba(200,120,100,.3); }
+  #diary h2 { font:400 30px "Kaiti SC","STKaiti",serif; color:#94805f; height:64px; }
+  .dline { font-family:"HanziPen SC","Hannotate SC","Kaiti SC",serif; font-size:41px; line-height:75px; color:#3b3a58; white-space:nowrap; }
+  .dline span { opacity:0; }
+  .dline.last { color:#3a4aa6; }
+
+  /* night bubbles */
+  #floaters { position:absolute; left:170px; top:330px; display:flex; flex-direction:column; gap:22px; }
+  #floaters .row { gap:16px; transform-origin:0 50%; }
+  #floaters img.av { width:70px; height:70px; border-radius:50%; box-shadow:0 8px 26px rgba(0,0,20,.5); }
+  #floaters .bub { font-size:44px; padding:13px 30px 14px; border-radius:30px; border-top-left-radius:9px;
+                   background:var(--cream); box-shadow:0 10px 36px rgba(0,0,30,.45); }
+  #sticker { width:214px; height:150px; background:url(../../docs/images/chat.webp) no-repeat;
+             background-size:1254px 1254px; background-position:-238px -600px; transform:rotate(-2deg);
+             -webkit-mask-image:radial-gradient(ellipse 50% 50% at 50% 50%,#000 70%,transparent 100%); }
+
+  /* caption pill, same look as the labels in her pictures */
+  #cap { position:absolute; top:976px; padding:11px 36px 13px; border-radius:999px; white-space:nowrap;
+         background:rgba(253,246,233,.95); border:3px solid var(--tan); color:var(--brown); font-size:35px;
+         box-shadow:0 8px 28px rgba(60,40,20,.28); transform:translateX(-50%); }
+
+  /* title */
+  #title { position:absolute; left:130px; top:318px; color:#fff; text-shadow:0 4px 34px rgba(5,8,50,.75); }
+  #title h1 { font-size:92px; font-weight:600; letter-spacing:1px; }
+  #title p { font-size:42px; margin-top:20px; color:#eef1ff; }
+  #title code { display:block; font:400 28px "SF Mono",Menlo,monospace; margin-top:34px; color:#cdd7ff; }
+  #title small { display:block; font-size:21px; margin-top:26px; color:#aeb8e6; }
+  #dip { position:absolute; inset:0; background:var(--cream); }
+  #black { position:absolute; inset:0; background:#000; }
+</style></head>
+<body><div id="stage">
+  <div id="cover" class="world" style="width:1774px;height:887px">
+    <img src="../../docs/images/cover.webp" alt="">
+    <div id="dusk" class="fill"></div><div id="night" class="fill"></div><div id="glow" class="fill"></div>
+    <canvas id="cvCover" width="1774" height="887"></canvas>
+  </div>
+  <div id="cottage" class="world" style="width:1672px;height:941px">
+    <img src="../../docs/images/cottage_zh.webp" alt="">
+    <div id="cottageGlow" class="fill"></div>
+    <canvas id="cvCottage" width="1672" height="941"></canvas>
+  </div>
+  <div id="dip"></div>
+  <div id="scrim"></div>
+  <div id="phone"><div id="screen"><div id="notch"></div>
+    <div id="bar"><img src="../../src/fish/panel/img/her.webp" alt=""><div><b>大肥鱼</b><span id="clock"></span></div></div>
+    <div id="msgs"></div>
+    <div id="input">说点什么…<svg width="30" height="30" viewBox="0 0 24 24" fill="#7f95e6"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg></div>
+  </div></div>
+  <div id="diary"><h2 id="dhead"></h2></div>
+  <div id="floaters"></div>
+  <div id="cap"></div>
+  <div id="title">
+    <h1>Whale Be Friends</h1>
+    <p>大肥鱼，一个记得你、也会忘事的 AI 朋友</p>
+    <code>github.com/Soda-null/whale-be-friends</code>
+    <small>对话是写的示意 · 粉丝做的小项目，和 DeepSeek、腾讯都没有关系</small>
+  </div>
+  <div id="black"></div>
+</div>
+<script>
+const TL = window.TL;
+const $ = id => document.getElementById(id);
+const clamp = (v,a=0,b=1) => Math.min(b,Math.max(a,v));
+const lerp = (a,b,k) => a+(b-a)*k;
+const smooth = (a,b,t) => { const k=clamp((t-a)/(b-a)); return k*k*(3-2*k); };
+const outCubic = k => 1-Math.pow(1-clamp(k),3);
+const outBack = k => { k=clamp(k); const c=1.5; return 1+(c+1)*Math.pow(k-1,3)+c*Math.pow(k-1,2); };
+const inOut = (a,b,t) => { const k=clamp((t-a)/(b-a)); return k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2; };
+function rng(seed){ return () => { seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed);
+  t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function place(el,W,H,z,cx,cy){ cx=clamp(cx,960/z,W-960/z); cy=clamp(cy,540/z,H-540/z);
+  el.style.transform=`translate(${960-cx*z}px,${540-cy*z}px) scale(${z})`; }
+
+// Build the DOM from the timeline.
+const her = "../../src/fish/panel/img/her.webp";
+$("clock").textContent = TL.phone.clock;
+const rows = TL.messages.map(m => {
+  const r=document.createElement("div"); r.className="row "+m.who;
+  r.innerHTML=(m.who==="her"?`<img src="${her}" alt="">`:"")+`<div class="bub">${m.text}</div>`+
+    (m.who==="her"?`<div class="dots"><i></i><i></i><i></i></div>`:"");
+  $("msgs").appendChild(r); return {el:r,t:m.t,dots:r.querySelector(".dots"),bub:r.querySelector(".bub")};
+});
+$("dhead").textContent = TL.diary.heading;
+const dlines = TL.diary.lines.map((l,i,a) => {
+  const d=document.createElement("div"); d.className="dline"+(i===a.length-1?" last":"");
+  d.innerHTML=[...l.text].map(c=>`<span>${c}</span>`).join("");
+  $("diary").appendChild(d); return {spans:[...d.children],t0:l.t0,t1:l.t1};
+});
+const floats = TL.floaters.items.map(f => {
+  const r=document.createElement("div"); r.className="row";
+  r.innerHTML=`<img class="av" src="${her}" alt="">`+(f.sticker?`<div class="bub" style="padding:6px 8px"><div id="sticker"></div></div>`:`<div class="bub">${f.text}</div>`);
+  $("floaters").appendChild(r); return {el:r,t:f.t};
+});
+
+// Fixed random particles, so every frame is repeatable.
+const R=rng(20261105), rr=(a,b)=>a+(b-a)*R();
+const shimmer=[...Array(70)].map(()=>({x:rr(0,640),y:rr(615,815),w:rr(14,62),s:rr(.5,1.5),p:rr(0,7)}));
+const motes=[...Array(34)].map(()=>({x:rr(0,1774),y:rr(0,887),r:rr(1.2,3),vx:rr(-5,8),vy:rr(-7,-1.5),p:rr(0,7)}));
+const bubbles=[...Array(7)].map(()=>({x:rr(1000,1095),r:rr(1.5,3.2),s:rr(11,20),p:rr(0,130)}));
+const leaves=[...Array(5)].map(()=>({x:rr(380,1020),t0:rr(-1,4.5),s:rr(34,52),w:rr(14,40),p:rr(0,7),c:R()<.5?"#e9c54f":"#dfae3a"}));
+const stars=[...Array(150)].map(()=>{let x,y;do{x=rr(0,1100);y=rr(0,350);}while((x>405&&y<95)||(x>880&&y>120)||(x>1000)||(y>300&&x>440));
+  return {x,y,r:rr(.6,1.9),p:rr(0,7),s:rr(.7,2.2)};});
+const flies=[...Array(16)].map(()=>({x:rr(120,860),y:rr(600,790),p:rr(0,7),s:rr(.25,.6),a:rr(14,38)}));
+const cMotes=[...Array(30)].map(()=>({x:rr(0,1672),y:rr(0,941),r:rr(1.2,3),vx:rr(-5,7),vy:rr(-7,-1.5),p:rr(0,7)}));
+
+function drawCover(t,dusk,night){
+  const c=$("cvCover").getContext("2d"); c.clearRect(0,0,1774,887);
+  // light on the water: white by day, gold at dusk, moonlit at night
+  const col = night>.5 ? "200,214,255" : dusk>.5 ? "255,214,160" : "255,255,255";
+  for(const s of shimmer){ const a=Math.pow(Math.abs(Math.sin(t*s.s+s.p)),4)*.5*(1-night*.45);
+    c.fillStyle=`rgba(${col},${a})`; c.beginPath(); c.ellipse(s.x,s.y,s.w/2,1.6,0,0,7); c.fill(); }
+  // sun motes, gone at night
+  if(night<1) for(const m of motes){ const a=(.28+.25*Math.sin(t*.9+m.p))*(1-night);
+    const x=(m.x+m.vx*t+1774)%1774, y=(m.y+m.vy*t+887)%887;
+    c.fillStyle=`rgba(255,240,195,${Math.max(0,a)})`; c.beginPath(); c.arc(x,y,m.r,0,7); c.fill(); }
+  // bubbles in the goldfish tank
+  for(const b of bubbles){ const k=((t*b.s+b.p)%130)/130, y=705-k*130;
+    c.strokeStyle=`rgba(255,255,255,${.75*(1-k*.6)})`; c.lineWidth=1.2;
+    c.beginPath(); c.arc(b.x+Math.sin(t*2+b.p)*2.5,y,b.r,0,7); c.stroke(); }
+  // a few leaves falling, in the morning only
+  if(t<15) for(const l of leaves){ const d=t-l.t0; if(d<0) continue;
+    const y=-20+d*l.s*2.2, x=l.x+Math.sin(d*1.1+l.p)*l.w+d*14; if(y>900) continue;
+    c.save(); c.translate(x,y); c.rotate(d*1.3+l.p); c.scale(1,.35+.65*Math.abs(Math.sin(d*1.8+l.p)));
+    c.fillStyle=l.c; c.beginPath(); c.ellipse(0,0,11,6,0,0,7); c.fill(); c.restore(); }
+  // stars and fireflies
+  if(night>0){ for(const s of stars){ const a=night*(.45+.55*Math.abs(Math.sin(t*s.s+s.p)));
+      c.fillStyle=`rgba(238,242,255,${a})`; c.beginPath(); c.arc(s.x,s.y,s.r,0,7); c.fill(); }
+    for(const f of flies){ const a=night*Math.pow(Math.abs(Math.sin(t*f.s*2.4+f.p)),3);
+      const x=f.x+Math.sin(t*f.s+f.p)*f.a, y=f.y+Math.cos(t*f.s*.8+f.p)*f.a*.5;
+      const g=c.createRadialGradient(x,y,0,x,y,12); g.addColorStop(0,`rgba(255,226,130,${a})`); g.addColorStop(1,"rgba(255,226,130,0)");
+      c.fillStyle=g; c.beginPath(); c.arc(x,y,12,0,7); c.fill(); } }
+}
+function drawCottage(t){
+  const c=$("cvCottage").getContext("2d"); c.clearRect(0,0,1672,941);
+  for(const m of cMotes){ const x=(m.x+m.vx*t+1672)%1672, y=(m.y+m.vy*t+941)%941;
+    c.fillStyle=`rgba(255,240,195,${Math.max(0,.26+.24*Math.sin(t*.9+m.p))})`; c.beginPath(); c.arc(x,y,m.r,0,7); c.fill(); }
+  c.lineCap="round";
+  for(let i=0;i<3;i++){ c.beginPath(); const x0=1274+i*18;
+    for(let k=0;k<=16;k++){ const y=496-k*6, x=x0+Math.sin(k*.5+t*1.5+i*2)*(2+k*.6);
+      k?c.lineTo(x,y):c.moveTo(x,y); }
+    c.strokeStyle=`rgba(255,255,255,${.22+.06*Math.sin(t+i)})`; c.lineWidth=7; c.stroke(); }
+}
+const capEl=$("cap");
+function render(t){
+  // ---- grade: the same lake from morning to night
+  const G=TL.grade, dusk=smooth(G.dusk_in,G.dusk_full,t)*(1-.55*smooth(G.night_start,G.night_full,t));
+  const night=inOut(G.night_start,G.night_full,t);
+  $("dusk").style.opacity=dusk*.9; $("night").style.opacity=night;
+  const flick=.9+.1*Math.sin(t*7.3)*Math.sin(t*3.1);
+  $("glow").style.opacity=Math.max(night, dusk*.45)*flick;
+  $("cover").querySelector("img").style.filter=`saturate(${1+.14*dusk+.28*night}) brightness(${1-.04*night})`;
+
+  // ---- camera on the cover: from the lake across to her
+  let z,cx,cy;
+  if(t<5.2){ const k=inOut(0,5.0,t); z=lerp(1.62,1.30,k); cx=lerp(593,1040,k); cy=lerp(556,452,k); }
+  else if(t<15.5){ const k=(t-5.2)/10.3; z=lerp(1.30,1.36,k); cx=1070; cy=lerp(452,440,k); }
+  else if(t<26){ const k=clamp((t-18.4)/7.8); z=lerp(1.30,1.37,k); cx=1070; cy=lerp(450,436,k); }
+  else { const k=clamp((t-26)/6.4); z=lerp(1.37,1.30,outCubic(k)); cx=1070; cy=lerp(436,452,k); }
+  place($("cover"),1774,887,z,cx,cy);
+  drawCover(t,dusk,night);
+
+  // ---- cottage cross-fade with a slow push towards her
+  const C=TL.cottage, midIn=(C.in+C.in_end)/2, midOut=(C.out+C.out_end)/2, ca=(t>=midIn&&t<midOut)?1:0;
+  // two busy pictures turn to mud when blended, so dip through her cream instead
+  $("dip").style.opacity=Math.max(smooth(C.in,midIn,t)*(1-smooth(midIn,C.in_end,t)),smooth(C.out,midOut,t)*(1-smooth(midOut,C.out_end,t)));
+  const co=$("cottage"); co.style.display=ca>0?"":"none";
+  if(ca>0){ const k=clamp((t-C.in)/(C.out_end-C.in)); place(co,1672,941,lerp(1.72,1.1483,outCubic(k*1.12)),lerp(870,836,outCubic(k*1.12)),lerp(520,470.5,outCubic(k*1.12)));
+    $("cottageGlow").style.opacity=.8+.2*Math.sin(t*6.1)*Math.sin(t*2.7); drawCottage(t); }
+
+  // ---- phone
+  const P=TL.phone, pin=smooth(P.in,P.in+.55,t), pout=smooth(P.out-.3,P.out,t);
+  const ph=$("phone"); ph.style.display=(t>=P.in&&t<=P.out)?"":"none";
+  ph.style.opacity=pin*(1-pout);
+  const buzz=(t>P.in+.05&&t<P.in+.5)?Math.sin(t*95)*2.2:0;
+  ph.style.transform=`translate(${buzz}px,${lerp(70,0,outBack((t-P.in)/.6))+pout*40}px) rotate(${lerp(-3,-1.2,pin)}deg)`;
+  for(const r of rows){ const a=(t-r.t)/.28; r.el.style.visibility=(t>=r.t-.6)?"visible":"hidden";
+    const typing=r.dots&&t>=r.t-.55&&t<r.t;
+    if(r.dots){ r.dots.style.display=typing?"flex":"none";
+      [...r.dots.children].forEach((d,i)=>{d.style.transform=`translateY(${Math.sin(t*12-i*1.1)*3.5}px)`;}); }
+    r.bub.style.visibility=t>=r.t?"visible":"hidden";
+    const img=r.el.querySelector("img"); if(img) img.style.visibility=(t>=r.t-.55)?"visible":"hidden";
+    r.el.style.opacity=(t>=r.t-.55)?1:0;
+    r.el.style.transform=t>=r.t?`scale(${lerp(.86,1,outBack(a))})`:"none"; }
+
+  // ---- diary
+  const D=TL.diary, di=smooth(D.in,D.in+.6,t), dout=smooth(D.out-.5,D.out,t);
+  const de=$("diary"); de.style.display=(t>=D.in&&t<=D.out)?"":"none"; de.style.opacity=di*(1-dout);
+  de.style.transform=`translateY(${lerp(44,0,outCubic((t-D.in)/.7))+dout*-16}px) rotate(-1.4deg)`;
+  for(const l of dlines){ const n=l.spans.length; l.spans.forEach((s,i)=>{ s.style.opacity=clamp(((t-l.t0)/(l.t1-l.t0)*n-i)/1.2); }); }
+
+  // ---- scrim behind phone and diary
+  $("scrim").style.opacity=Math.max(pin*(1-pout), di*(1-dout)*.7);
+
+  // ---- night bubbles
+  const F=TL.floaters, fo=1-smooth(F.out-.4,F.out,t);
+  $("floaters").style.opacity=fo; $("floaters").style.display=t<F.out?"":"none";
+  for(const f of floats){ const a=(t-f.t)/.32; f.el.style.visibility=t>=f.t?"visible":"hidden";
+    f.el.style.opacity=clamp(a*1.6); f.el.style.transform=`scale(${lerp(.84,1,outBack(a))})`; }
+
+  // ---- caption
+  const cap=TL.captions.find(c=>t>=c.in&&t<=c.out);
+  if(cap){ if(capEl.textContent!==cap.text) capEl.textContent=cap.text;
+    const a=smooth(cap.in,cap.in+.35,t)*(1-smooth(cap.out-.3,cap.out,t));
+    capEl.style.display=""; capEl.style.opacity=a; capEl.style.left=cap.x+"px";
+    capEl.style.transform=`translateX(-50%) translateY(${(1-a)*12}px)`;
+  } else capEl.style.display="none";
+
+  // ---- title and the end
+  const T=TL.title, ti=$("title"); ti.style.display=t>=T.in?"":"none";
+  [...ti.children].forEach((e,i)=>{ const k=clamp((t-T.in-i*.2)/.7);
+    e.style.opacity=outCubic(k); e.style.transform=`translateY(${(1-outCubic(k))*20}px)`; });
+  $("black").style.opacity=Math.max(1-smooth(0,.9,t), smooth(T.fade_out,TL.duration-.05,t));
+}
+window.render=render;
+window.ready=Promise.all([document.fonts.ready,...[...document.images].map(i=>i.decode().catch(()=>{}))]);
+</script></body></html>

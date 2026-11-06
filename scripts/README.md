@@ -7,6 +7,7 @@
 | 脚本 | 做什么 | 谁跑 |
 |---|---|---|
 | `check_doc_structure.py` | 查三行卡片、`docs/README.md` 列全、入口文件大小 | 提交钩子（改到文档时）；手动 `python3 scripts/check_doc_structure.py` |
+| `demo_video/` | 做 30 秒示范视频：`timeline.json` 管台词和时间，`scene.html` 管画面，`music.py` 现合成配乐（钢琴、湖水、虫鸣，不用别人的音乐），`render.py` 用本机 Chrome 一帧帧拍下来合成 mp4，放 `out/`（不进 git）。对话是写的示意，不碰 `data/`。要先 `pip install playwright imageio-ffmpeg numpy scipy` | 想改视频时手动跑：先 `music.py`，再 `render.py` |
 | `new_log.py` | 新建当天 `docs/log/YYYY-MM-DD.md`，已有不覆盖 | 会话结束时 |
 | `fish.sh` | 在 Mac 上看 box 上的她（短命令 `yu` 就是它），所有时间按本地 `.env` 的 `TZ` 显示：不带参数或 `life [天数]` 看她今天和最近的日记，`me [在干嘛]` 看或改她眼里你的状态，`review [天数]` 看她这几天的复盘，`mem`（=`show`）、`room`、`put`、`sill`、`log`；别的字都当成对她小屋说的大白话（`yu 往冰箱放两盒牛奶`、`yu 把窗台上的小葱拿走`，走 `fish home`，决定 36）；`notebook`、`logs`、`sent`、`timers`、`browse`、`stickers <文件夹>`（把 Mac 上一个文件夹的图送给她，她当场起名收下）、`cottage [put 东西 | sill 东西]`（看她的小屋、往里放东西） | 用户随时 |
 | `review.py` | 每周复盘：她这几天的真实表现，一屏看完，只读、不调模型、只打到终端。每天双方几条多长、口头禅和重复的气泡、先开口和连发没人回、空闲选了什么、种菜养鱼码头花店做了几回、每晚缺了什么（缺日记点名）、惦记的事。只用标准库、不 import `fish`：`fish.sh review` 把这一个文件经 ssh 喂给 box 上的 Python，所以不用部署、不用重启她 | Mac 上 `yu review [天数]`（默认 7）；她住的那台机器上 `python3 scripts/review.py [天数]` |
