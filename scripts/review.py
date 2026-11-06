@@ -429,4 +429,8 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
+    # The report is Chinese and whoever reads it (ssh to a Mac, the panel) expects UTF-8. Left to the
+    # machine's own setting, a pipe on Windows is cp1252 or cp936 and printing it would crash.
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
     sys.exit(main())

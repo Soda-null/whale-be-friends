@@ -6,6 +6,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import os
 import re
 import sqlite3
 import subprocess
@@ -79,14 +80,33 @@ def test_a_report_leaves_the_folder_exactly_as_it_was(db: Path) -> None:
     assert after == before
 
 
-def test_it_runs_piped_like_over_ssh_with_nothing_of_ours_to_import(db: Path, tmp_path: Path) -> None:
+def _piped(db: Path, cwd: Path, flags: list[str], extra_env: dict[str, str]) -> subprocess.CompletedProcess:
+    """The script fed on stdin, in a bare environment. Windows can't start Python without SYSTEMROOT."""
+    env = {k: os.environ[k] for k in ("SYSTEMROOT",) if k in os.environ} | extra_env
+    script = (ROOT / "scripts" / "review.py").read_bytes()
+    return subprocess.run([sys.executable, *flags, "-", "3", "--db", str(db)], input=script, cwd=cwd,
+                          capture_output=True, env=env)
+
+
+def _one_turn(db: Path) -> None:
     conn = connect(db)
     turn(conn, "2026-03-08T10:00:00", "早", "早呀")
     conn.commit()
     conn.close()
-    script = (ROOT / "scripts" / "review.py").read_bytes()
-    done = subprocess.run([sys.executable, "-I", "-", "3", "--db", str(db)], input=script, cwd=tmp_path,
-                          capture_output=True, check=True, env={"PYTHONIOENCODING": "utf-8"})
+
+
+def test_it_runs_piped_like_over_ssh_with_nothing_of_ours_to_import(db: Path, tmp_path: Path) -> None:
+    _one_turn(db)
+    done = _piped(db, tmp_path, ["-I"], {})
+    assert done.returncode == 0, done.stderr.decode("utf-8", "replace")
+    assert "先看这几条" in done.stdout.decode("utf-8")
+
+
+def test_the_report_is_utf8_even_where_the_machine_would_pick_something_else(db: Path, tmp_path: Path) -> None:
+    # A pipe on Windows defaults to cp1252 or cp936. Latin-1 can't hold Chinese either, on any system.
+    _one_turn(db)
+    done = _piped(db, tmp_path, [], {"PYTHONIOENCODING": "latin-1"})
+    assert done.returncode == 0, done.stderr.decode("utf-8", "replace")
     assert "先看这几条" in done.stdout.decode("utf-8")
 
 
