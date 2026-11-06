@@ -4,6 +4,8 @@
 
 [English](README.md) · **中文**
 
+▶ [看她的一天：1 分钟示范视频](https://github.com/Soda-null/whale-be-friends/releases/download/demo-video/whale_be_friends_demo.mp4)（mp4，23MB，点开会下载）
+
 > **是什么：** 仓库的大门：这是什么、怎么一键养一条、她怎么运作；想改代码的人从哪读起。
 > **地位：** 索引。现状只写在 `STATUS.md`；在仓库里干活的规矩在 `AGENTS.md`。
 > **读法：** 想养一条看前三节；想改代码看最后一节。

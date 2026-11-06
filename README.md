@@ -4,6 +4,8 @@
 
 **English** · [中文](README_zh.md)
 
+▶ [Watch one day of hers: a one-minute demo](https://github.com/Soda-null/whale-be-friends/releases/download/demo-video/whale_be_friends_demo.mp4) (mp4, 23 MB, downloads when opened, in Chinese)
+
 > **What:** The front door: what this is, how to get your own in one step, how she works, and where to start reading if you want to change the code.
 > **Standing:** Index. The current state lives only in `STATUS.md`; the rules for working in this repo are in `AGENTS.md`.
 > **How to read:** To adopt one, read the first three sections. To hack on her, read the last one.
