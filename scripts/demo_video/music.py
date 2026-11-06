@@ -72,18 +72,25 @@ def pad(notes, length):
     return sig * env * 0.016
 
 
-# (root, chord tones) per half bar, F major. Bar 9 lands on the title.
-CHORDS = [
-    [(41, [60, 64, 67, 69]), (41, [60, 65, 67, 69])],  # F
-    [(40, [59, 62, 67, 72]), (45, [60, 64, 67, 71])],  # C/E  Am7
-    [(38, [60, 62, 65, 69]), (38, [60, 64, 65, 69])],  # Dm9
-    [(46, [58, 62, 65, 69]), (46, [58, 62, 65, 67])],  # Bbmaj7
-    [(45, [60, 64, 65, 69]), (45, [60, 65, 67, 69])],  # F/A
-    [(43, [58, 62, 65, 69]), (48, [58, 60, 65, 67])],  # Gm7  C7sus
-    [(45, [60, 64, 67, 71]), (38, [60, 62, 65, 69])],  # Am7  Dm7
-    [(46, [58, 62, 65, 69]), (48, [58, 60, 65, 67])],  # Bbmaj7 C7sus
-    [(41, [60, 65, 67, 69]), (41, [60, 65, 67, 72])],  # F add9, rings out
-]
+F = [(41, [60, 64, 67, 69]), (41, [60, 65, 67, 69])]
+C_AM = [(40, [59, 62, 67, 72]), (45, [60, 64, 67, 71])]
+DM = [(38, [60, 62, 65, 69]), (38, [60, 64, 65, 69])]
+BB = [(46, [58, 62, 65, 69]), (46, [58, 62, 65, 67])]
+FA = [(45, [60, 64, 65, 69]), (45, [60, 65, 67, 69])]
+GM_C = [(43, [58, 62, 65, 69]), (48, [58, 60, 65, 67])]
+AM_DM = [(45, [60, 64, 67, 71]), (38, [60, 62, 65, 69])]
+BB_C = [(46, [58, 62, 65, 69]), (48, [58, 60, 65, 67])]
+GM = [(43, [58, 62, 65, 69]), (43, [58, 62, 65, 67])]
+CSUS = [(48, [58, 60, 65, 67]), (48, [58, 60, 64, 67])]
+# One bar = 3.64 s. Bar 16 lands on the title and rings out.
+CHORDS = [F, C_AM, DM, BB,                # morning, the first chat
+          FA, GM_C,                       # the cottage
+          F, C_AM, BB_C,                  # the windowsill, the dock
+          DM, BB,                         # rain, the piano steps back
+          GM, CSUS,                       # she mixes up the noodle shop
+          AM_DM, GM_C, BB_C,              # the diary
+          [(41, [60, 65, 67, 69]), (41, [60, 65, 67, 72])]]
+QUIET_BARS = {9: 0.62, 10: 0.62}
 # (bar, beat, midi, velocity): small and sparse, the chat should stay in front
 MELODY = [
     (0, 2, 72, .55), (0, 3, 74, .5),
@@ -91,9 +98,14 @@ MELODY = [
     (3, 0, 74, .5), (3, 1.5, 72, .42), (3, 3, 69, .42),
     (4, 0, 72, .58), (4, 1, 77, .55), (4, 2.5, 76, .5), (4, 3.5, 72, .42),
     (5, 0, 74, .55), (5, 2.5, 72, .45),
-    (6, 0, 76, .55), (6, 1.5, 74, .45), (6, 2.5, 72, .5),
-    (7, 0, 74, .5), (7, 2, 72, .45),
-    (8, 0, 77, .62), (8, 1, 79, .45), (8, 2, 84, .42),
+    (6, 0, 77, .55), (6, 1.5, 76, .45), (6, 2.5, 72, .5),
+    (7, 0, 74, .5), (7, 1, 76, .45), (7, 2, 79, .5),
+    (8, 0, 77, .55), (8, 1.5, 74, .45), (8, 2.5, 72, .45),
+    (12, 2, 72, .4), (12, 3, 74, .4),
+    (13, 0, 76, .55), (13, 1.5, 74, .45), (13, 2.5, 72, .5),
+    (14, 0, 74, .5), (14, 2, 72, .45),
+    (15, 0, 74, .5), (15, 1, 76, .45), (15, 2, 72, .45),
+    (16, 0, 77, .62), (16, 1, 79, .45), (16, 2, 84, .42),
 ]
 
 
@@ -105,12 +117,12 @@ def score():
             last_bar = bar == len(CHORDS) - 1
             add(dry, pad([root + 12, *tones[:3]], BAR / 2 + 1.3), t0)
             if half == 0 or root != halves[0][0]:
-                add(dry, felt_piano(root, 4.0, 0.46), t0)
+                add(dry, felt_piano(root, 4.0, 0.46 * QUIET_BARS.get(bar, 1)), t0)
             if last_bar and half == 1:
                 continue
             for k, (beat, idx) in enumerate([(0.5, 0), (1.0, 2), (1.5, 1)]):
                 jitter = rng.normal(0, 0.012)
-                add(dry, felt_piano(tones[idx], 3.0, 0.5 - 0.05 * k + rng.normal(0, 0.03)),
+                add(dry, felt_piano(tones[idx], 3.0, (0.5 - 0.05 * k + rng.normal(0, 0.03)) * QUIET_BARS.get(bar, 1)),
                     t0 + beat * BEAT + jitter, pan=(idx - 1.5) * 0.22)
     for bar, beat, midi, vel in MELODY:
         add(dry, music_box(midi, vel=vel), bar * BAR + beat * BEAT + rng.normal(0, 0.01), pan=0.18)
@@ -140,9 +152,14 @@ def ambience():
     for ch in range(2):
         out[:, ch] += band(rng.normal(0, 1, N), 180, 1100) * swell * 0.11
     # morning birds, gone by the time the sun is low
-    for when, pan in [(1.1, -.6), (1.42, -.6), (3.3, .5), (3.55, .5), (3.8, .5), (15.8, -.4), (16.1, -.4), (17.4, .6)]:
+    for when, pan in [(1.2, -.6), (1.52, -.6), (3.9, .5), (4.15, .5), (4.4, .5), (18.4, -.4), (18.7, -.4), (20.6, .6), (23.4, .4), (23.7, .4), (29.3, -.5), (31.2, .5), (31.5, .5)]:
         add(out, chirp(3000, 4200, .11, .06), when, pan=pan)
         add(out, chirp(4300, 3300, .09, .04), when + .12, pan=pan)
+    # rain from the cut until the sky clears
+    r0, r1, r2 = g["rain"]
+    wet = np.clip((t - (r0 + .05)) / .5, 0, 1) * (1 - np.clip((t - r1) / (r2 - r1), 0, 1))
+    for ch in range(2):
+        out[:, ch] += band(rng.normal(0, 1, N), 900, 8000) * wet * 0.05
     # crickets come with the night
     level = np.clip((t - g["night_start"]) / 2.2, 0, 1)
     pulse = (np.sin(2 * np.pi * 17 * t) > 0.2) * (np.sin(2 * np.pi * 1.25 * t) > -0.2)
@@ -172,13 +189,15 @@ def cues():
     # the phone buzzes on the sill
     t = np.arange(int(.2 * SR)) / SR
     buzz = np.sin(2 * np.pi * 165 * t) * np.sin(np.pi * t / .2) * 0.07
-    add(out, buzz, TL["phone"]["in"] + .05)
-    add(out, buzz, TL["phone"]["in"] + .3)
-    for m in TL["messages"]:
-        if m["who"] == "her":
-            add(out, bloop(560, 1180, .17), m["t"], pan=-.25)
-        else:
-            add(out, tick(.12), m["t"], pan=.25)
+    for phone in TL["phones"]:
+        add(out, buzz, phone["in"] + .05)
+        add(out, buzz, phone["in"] + .3)
+        for chat in phone["chats"]:
+            for m in chat["messages"]:
+                if m["who"] == "her":
+                    add(out, bloop(560, 1180, .17), m["t"], pan=-.25)
+                else:
+                    add(out, tick(.12), m["t"], pan=.25)
     for f in TL["floaters"]["items"]:
         add(out, bloop(380, 760, .11), f["t"], pan=-.15)
     # a pen on paper while the diary writes itself

@@ -18,7 +18,9 @@ OUT = HERE / "out"
 
 
 def open_scene(p, timeline):
-    browser = p.chromium.launch(channel="chrome", headless=True)
+    browser = p.chromium.launch(channel="chrome", headless=True, args=[
+        "--allow-file-access-from-files",  # warp.js reads her pictures into WebGL
+        "--use-angle=metal", "--ignore-gpu-blocklist", "--enable-gpu-rasterization"])
     page = browser.new_page(viewport={"width": 1920, "height": 1080})
     page.on("pageerror", lambda e: print("page error:", e))
     page.add_init_script(f"window.TL = {json.dumps(timeline, ensure_ascii=False)};")
