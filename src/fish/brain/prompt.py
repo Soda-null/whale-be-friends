@@ -384,12 +384,15 @@ def render_waiting(waiting: list[Memory]) -> str:
 def build_close_messages(summary: str, turns: list[Turn], already: list[str],
                          today: str, known: list[str] | None = None,
                          pacts: list[Memory] | None = None, *, asked: list[Followup] | None = None,
-                         waiting: list[Memory] | None = None) -> list[dict[str, str]]:
+                         waiting: list[Memory] | None = None,
+                         held: list[Followup] | None = None) -> list[dict[str, str]]:
     """known: what she always carries about him (her profile), so the close can see what is
     still missing and fill in what the chat forgot to write down. today: YYYY-MM-DD; the
     weekday is added here so the notes do not work it out wrong. pacts: the promises still
     open, by id, for `pact_done`. asked: the follow-ups she asked in this chat; waiting: the
-    events it touched that end in a result, by id, for `outcomes`."""
+    events it touched that end in a result, by id, for `outcomes`. held: what she still means to
+    ask him, due or not, by id, for `followups_done`: he sent the photo a day before she meant to
+    ask for it, nothing could close the question, and she asked the next morning (11-09)."""
     content = render(
         load_template("close_episode"), summary=summary or "（无）", turns=render_turns(turns),
         already="\n".join(f"- {a}" for a in already) or "（无）",
@@ -397,5 +400,6 @@ def build_close_messages(summary: str, turns: list[Turn], already: list[str],
         known="\n".join(f"- {k}" for k in known or []) or "（还没有）",
         pacts=render_pacts(pacts or []), asked=render_asked(asked or []),
         waiting=render_waiting(waiting or []),
+        held="\n".join(f"- [#{f.id}] {f.text}（打算 {f.due} 问）" for f in held or []) or "（没有）",
     )
     return [{"role": "user", "content": content}]

@@ -23,8 +23,14 @@ def seen(s: Scene) -> list[Urge]:
     return [Urge(HIM, "seen", f"今天看到的（见闻 #{m.id}）：{m.text}", ref=m) for m in found]
 
 
+def _day(created: str) -> str:
+    """"11月4日": a follow-up says "今天考试" in the words of the day it was written (11-05 she
+    asked about "today's" exam, which was the day before)."""
+    return f"{int(created[5:7])}月{int(created[8:10])}日"
+
+
 def due(s: Scene) -> list[Urge]:
-    return [Urge(HIM, "due", f"惦记的事到日子了（惦记 #{f.id}）：{f.text}", ref=f)
+    return [Urge(HIM, "due", f"惦记的事到日子了（惦记 #{f.id}，{_day(f.created)}记下的）：{f.text}", ref=f)
             for f in ProspectiveStore(s.conn).due(s.now)[:DUE_SHOWN]]
 
 

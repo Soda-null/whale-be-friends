@@ -452,10 +452,11 @@ class Brain:
         asked = self.prospective.asked_in(ep.id)
         chat = " ".join([ep.running_summary, *(t.text for t in turns)])
         waiting = self.store.awaiting_outcome(chat, at, also={f.source_memory for f in asked if f.source_memory})
+        held = self.prospective.open()
         raw = self.llm.chat(
             build_close_messages(ep.running_summary, turns, already, ep.started[:10],  # the chat's own date
                                  known=[f"[#{m.id}] {m.text}" for m in card], pacts=pacts,
-                                 asked=asked, waiting=waiting),
+                                 asked=asked, waiting=waiting, held=held),
             json_mode=True, temperature=0.3, max_tokens=CLOSE_TOKENS,
         )
         # what the chat said, word for word, when even the summary cannot be read from the reply
@@ -464,6 +465,13 @@ class Brain:
         his, hers = self.window.said_in(ep.id)
         checked = echo_checked(self.window.his_lines(ep.id))
         he_spoke = bool(his.strip())
+        if not he_spoke and turns:
+            # Only her own line, never answered in this chat (he wrote back hours later, in the next
+            # one). The model summed it up as "他还没回" and wrote her question down as a new thing to
+            # ask, which came due again and again (11-07 to 11-09, the photo he had already sent).
+            # Her words as they are; nothing of it is his.
+            closed.summary = fallback
+            closed.gist = (owner_words("我先找他说了：") + turns[0].text.replace("\n", " "))[:60]
         for n in closed.notes:
             if checked and echoed(n.kind, n.text, his, hers):
                 continue  # what she guessed or made up in the chat, not what he said
@@ -476,8 +484,12 @@ class Brain:
             self.store.note(n.kind, n.text, importance=n.importance, valence=n.valence,
                             arousal=n.arousal, about=n.about, source_episode=ep.id, tags=n.tags, now=at,
                             heard="close")
-        for f in closed.followups:
+        for f in (closed.followups if he_spoke else []):
             self.add_followup(f.text, f.due, at, ep.id)
+        still = {f.id for f in held}  # only a follow-up she was shown, and only on his word
+        for i in (closed.followups_done if he_spoke else []):
+            if i in still:
+                self.prospective.close(i, "settled")
         shown_events = {m.id for m in waiting}  # only an event she was shown, still current, gets it
         told = []
         for memory_id, text in (closed.outcomes if he_spoke else []):
@@ -496,7 +508,7 @@ class Brain:
             if c.old_id in on_card and self.store.get(c.old_id).alive:
                 self.store.correct(c.old_id, c.text, now=at)
         shown = {p.id for p in pacts}  # only a promise she was shown can be settled
-        for pact_id, state in closed.pact_done:
+        for pact_id, state in (closed.pact_done if he_spoke else []):
             if pact_id in shown:
                 self.store.settle(pact_id, state, now=at)
         left = [m for m in self.store.alive() if m.source_episode == ep.id]
