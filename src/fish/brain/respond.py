@@ -205,7 +205,8 @@ class Brain:
             reply.sticker = None
         refused = ""
         if reply.do and self.room is not None:  # she said she is off to do it: the room does it now
-            if not self.room.act(reply.do, now, reply.do_arg):
+            # not refused when it is what she is already doing ("在做饭呢" with do=cook again)
+            if not self.room.act(reply.do, now, reply.do_arg) and not self.room.doing_now(reply.do, now):
                 refused = self.room.name_of(reply.do)  # busy, out, or not possible now: the checker is told
         he_left = reply.guest == "leave"
         if reply.guest and self.room is not None:  # he says he is at her door, or going home (decision 41)
@@ -488,12 +489,13 @@ class Brain:
             self.store.note(n.kind, n.text, importance=n.importance, valence=n.valence,
                             arousal=n.arousal, about=n.about, source_episode=ep.id, tags=n.tags, now=at,
                             heard="close")
-        for f in (closed.followups if he_spoke else []):
-            self.add_followup(f.text, f.due, at, ep.id)
         still = {f.id for f in held}  # only a follow-up she was shown, and only on his word
         for i in (closed.followups_done if he_spoke else []):
             if i in still:
                 self.prospective.close(i, "settled")
+        # after settling: the next step ("二面怎么样") is not a repeat of the one just answered
+        for f in (closed.followups if he_spoke else []):
+            self.add_followup(f.text, f.due, at, ep.id)
         shown_events = {m.id for m in waiting}  # only an event she was shown, still current, gets it
         told = []
         for memory_id, text in (closed.outcomes if he_spoke else []):

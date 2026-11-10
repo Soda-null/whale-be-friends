@@ -99,6 +99,13 @@ class RoomNode:
         """What a chore is called ("change" -> "给鱼缸换水"); the key itself when there is no such chore."""
         return ACTIONS[key].doing if key in ACTIONS else key
 
+    def doing_now(self, key: str, now: datetime) -> bool:
+        """The chore she names is the one already under way."""
+        try:
+            return key in ACTIONS and self.cottage.load(now).doing == ACTIONS[key].doing
+        except ValueError:
+            return False
+
     def napping(self, now: datetime) -> bool:
         """She is having her nap right now: nobody texts in their sleep."""
         try:
