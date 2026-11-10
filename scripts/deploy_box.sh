@@ -34,10 +34,18 @@ if pgrep -f '[p]ython.* -m fish wechat' >/dev/null; then
     pgrep -fl '[p]ython.* -m fish wechat' >&2
     exit 1
 fi
-if ! .venv/bin/python -m pytest -q >/dev/null 2>&1; then
-    echo "tests fail here; not deploying (run .venv/bin/python -m pytest -q)" >&2
+# What failed is kept and shown: on 11-10 a deploy stopped here once, 29 runs right after all
+# passed, and with the output thrown away nobody could say which test it had been.
+TEST_OUT="$(mktemp)"
+if ! .venv/bin/python -m pytest -q >"$TEST_OUT" 2>&1; then
+    mkdir -p backups
+    KEPT="backups/deploy-tests-failed-$(date +%Y-%m-%d-%H%M%S).log"
+    mv "$TEST_OUT" "$KEPT"
+    echo "tests fail here; not deploying. What failed (all of it in $KEPT):" >&2
+    grep -E '^(FAILED|ERROR) ' "$KEPT" >&2 || tail -5 "$KEPT" >&2
     exit 1
 fi
+rm -f "$TEST_OUT"
 
 # 1. The box receives pushes straight into its checkout (same trick as the Yaqi repo).
 ssh "$BOX" "mkdir -p ~/$REMOTE_DIR && cd ~/$REMOTE_DIR && { git rev-parse --is-inside-work-tree >/dev/null 2>&1 || git init -q -b main; } && git config receive.denyCurrentBranch updateInstead"

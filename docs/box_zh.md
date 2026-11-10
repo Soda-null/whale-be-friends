@@ -47,6 +47,7 @@
 
 - **她说回了、他没收到：** `journalctl --user -u dafeiyu-wechat | grep "→"` 每条发出去的消息都有一行，带 message_id 和"凭证还剩几条"。有这一行、他却没收到，是微信服务器吞了或延迟了（10-26 晚出现过，次日恢复；每张对话凭证约 10 条、他 24 小时没说话就丢，见决定 14）。没有这一行，是我们这边没发。
 
+- **部署说"tests fail here"：** 它会直接列出哪几条测试没过，完整输出留在 Mac 的 `backups/deploy-tests-failed-日期.log`（不进 git）。重跑就过的是偶发失败，把那个文件留着查。
 - **服务起不来：** `journalctl --user -u dafeiyu-wechat -n 50`。常见：`.env` 没拷（`DEEPSEEK_API_KEY is empty`）、`data/wechat.json` 没拷（`还没绑微信`）。
 - **开机后服务没起：** `loginctl show-user young -p Linger` 要是 `yes`；不是就 `sudo loginctl enable-linger young`（要密码，用户自己敲）。
 - **box 重装或换机器：** 把 `data/` 整个拷过去就是她本人；代码重新 push 一遍。
