@@ -234,6 +234,7 @@ class Brain:
         said = r.day.current or (r.day.earlier[-1].turns if r.day.earlier else ())
         sit = Situation(
             last_line=datetime.fromisoformat(said[-1].ts) if said else None,
+            her_last=said[-1].text if said and not r.day.current and said[-1].role != "user" else "",
             persona=self.persona, now=now, mood=mood,
             relationship=self.relationship.stats(now),
             profile=r.profile, mentioned={m.id for m in r.touched}, formers=r.formers,

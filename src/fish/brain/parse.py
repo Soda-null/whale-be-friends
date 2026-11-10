@@ -34,6 +34,9 @@ _OWN_LABEL = re.compile(r"^\s*(?:say|assistant|你)\s*[:：]\s*", re.I)
 # a reply written as plain lines): a line that is only a bracketed note about the output format is
 # the prompt talking, not her.
 _ECHO = re.compile(r"^\s*[（(][^）)]*(?:输出格式|json\s*对象|不用\s*json)[^）)]*[）)]?\s*$", re.I)
+# The notes put at his line since (brain/closing.py, brain/gap.py), said back the same way; they
+# hold brackets of their own, so they are known by how they begin.
+_NOTE_BACK = re.compile(r"^\s*[（(](?:他只是应了一声|他在道别|离上面最后一句话)")
 
 
 MAX_BUBBLES = 5  # messages one reply may come in; more are joined into the last
@@ -72,7 +75,7 @@ def cut_say(text: str) -> tuple[str, bool]:
         if _FIELD_LINE.match(line) or line.lstrip().startswith("{") or '{"' in line:
             break
         kept.append(line)
-    return "\n".join(line for line in kept if not _ECHO.match(line)).strip(), fake
+    return "\n".join(line for line in kept if not _ECHO.match(line) and not _NOTE_BACK.match(line)).strip(), fake
 
 
 def clean_say(text: str) -> str:

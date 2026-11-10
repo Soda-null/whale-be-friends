@@ -46,8 +46,9 @@ def test_one_question_in_other_words_is_one_follow_up(tmp_path):
     later = ProspectiveStore(connect(tmp_path / "fish.db"))
     assert later.add("问他驾照科目二有没有消息", "2027-01-12", now=T0) is not None
     assert later.add("科目二那边后来有消息了吗", "2027-01-15", now=T0) is None
-    assert later.add("问他驾照考过了没", "2027-01-13", source_memory=7, now=T0) is not None
-    assert later.add("科目二怎么样了", "2027-01-16", source_memory=7, now=T0) is None  # about the same memory
+    # one note may hold two things ("周一考高数，周三考英语"): the same memory is not the same question
+    assert later.add("高数考得咋样", "2027-01-13", source_memory=7, now=T0) is not None
+    assert later.add("周三英语考完感觉如何", "2027-01-16", source_memory=7, now=T0) is not None
 
 
 def test_her_own_unanswered_line_writes_nothing_new_to_ask(tmp_path):
@@ -70,6 +71,16 @@ def test_what_he_already_told_her_is_settled_at_the_close(tmp_path):
     brain.close_episode(brain.episodes.open_episode(), T0 + timedelta(hours=2))
     assert f"[#{photo.id}] 演示的照片拍了没" in closes[0]
     assert later.get(photo.id).status == "settled" and later.due(T0 + timedelta(days=3)) == []
+
+
+def test_the_next_step_is_kept_when_the_first_is_settled(tmp_path):
+    brain, conn, _ = make_brain(tmp_path, {"followups_done": [1],
+                                           "followups": [{"text": "问他二面怎么样", "due": "2027-01-15"}]})
+    later = ProspectiveStore(conn)
+    later.add("问他面试怎么样", "2027-01-11", now=T0)
+    brain.respond("面试过了 下周二二面", "wechat", now=T0)
+    brain.close_episode(brain.episodes.open_episode(), T0 + timedelta(hours=2))
+    assert [f.text for f in later.open()] == ["问他二面怎么样"] and later.get(1).status == "settled"
 
 
 def test_a_due_follow_up_says_the_day_it_was_written(tmp_path):

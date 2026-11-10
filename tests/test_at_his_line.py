@@ -17,15 +17,16 @@ T0 = datetime(2027, 1, 9, 9, 20)
 
 
 def test_a_nod_is_a_nod_and_an_answer_is_an_answer():
-    for his in ("嗯嗯", "哈哈好的好的", "okok", "是的诶", "[表情：狗头，在开玩笑]", "[Doge][Doge]", "好滴～", "👌"):
-        assert closing_note(his, "去吧\n学累了歇会") == ACK_NOTE, his
-    for his in ("拜拜～", "嗯嗯那晚安吧好的好的", "先下了哈"):
+    for his in ("嗯嗯", "哈哈行行行", "okok", "对的呀", "[表情：狗头，在开玩笑]", "[Doge][Doge]", "好滴～", "👌"):
+        assert closing_note(his, "去吧\n累了就歇会儿") == ACK_NOTE, his
+    for his in ("拜拜～", "好好那我睡啦晚安晚安", "我先下了", "一会儿见", "好的好的上课去了哈", "有事找我"):
         assert closing_note(his, "去吧") == BYE_NOTE, his
     # he answers what she asked: not a nod
-    assert closing_note("是的", "那今晚还学不学") == "" and closing_note("可以", "周末来吗") == ""
+    assert closing_note("是的", "那今晚还去不去跑步") == "" and closing_note("可以", "周末来吗") == ""
     assert closing_note("晚安", "明天几点起？") == BYE_NOTE  # a goodbye is one whatever she asked
-    for his in ("演示过了", "我去", "好的 我明天考试", "吃啦吃啦", "为啥", "嗯？", "[图片]", "[文件：作业.pdf]", ""):
+    for his in ("演示过了", "我去", "好的 我明天考试", "吃过啦吃过啦", "为啥", "嗯？", "[图片]", "[文件：作业.pdf]", ""):
         assert closing_note(his, "去吧") == "", his
+    assert closing_note("[表情：大哭]", "去吧") == "" and closing_note(readable("[Sob][Sob]"), "去吧") == ""  # how he feels
 
 
 def test_the_gap_is_said_in_words_only_when_it_is_long():
@@ -52,6 +53,32 @@ def test_both_notes_stand_at_his_line_and_are_not_stored(tmp_path):
     assert last.startswith("我回来了\n（离上面最后一句话已经过了3 个多小时") and last.rstrip().endswith("）")
     stored = [t.text for t in brain.window.recent()]
     assert "嗯嗯" in stored and not any("（" in t for t in stored)
+
+
+def test_his_short_answer_to_what_she_texted_first_is_not_a_nod(tmp_path):
+    from fish.msgs import SheSaid
+    conn = connect(tmp_path / "fish.db")
+    s = Settings(api_key="t", base_url="", model="fake", db_path=tmp_path / "fish.db", window_size=20)
+    llm = FakeLLM(lambda messages, json_mode: json.dumps({"say": "行", "summary": "聊了", "gist": "聊了"}, ensure_ascii=False))
+    brain = Brain(conn, s, llm, persona_text="你是大肥鱼。")
+    brain.respond("早", now=T0)
+    brain.keep_her_line(SheSaid("周末要不要来我这吃饭", T0 + timedelta(hours=1), "wechat", first=True))
+    brain.respond("可以", now=T0 + timedelta(hours=2))  # a new chat by the clock, but he is answering her
+    last = next(m[-1]["content"] for m, _ in reversed(llm.calls) if m[0]["role"] == "system")
+    assert ACK_NOTE not in last and "已经过了" in last
+    # a picture alone after a pause still says it is a picture
+    from fish.brain.prompt import Situation, build_chat_messages
+    from fish.mood import Mood
+    sit = Situation(persona="", now=T0, mood=Mood(50, 0, 0), relationship={"days_known": 1, "days_talked": 1}, profile=[],
+                    diary=[], recalled=[], followups=[], earlier="", window=[], user_text="", user_image="data:image/png;base64,AA==",
+                    last_line=T0 - timedelta(hours=2))
+    assert build_chat_messages(sit)[-1]["content"][0]["text"].startswith("（他发了一张图）\n（离上面最后一句话")
+
+
+def test_the_notes_said_back_never_reach_him():
+    from fish.brain.parse import clean_say
+    for note in (ACK_NOTE, BYE_NOTE, gap_note(T0 - timedelta(hours=2), T0)):
+        assert clean_say("嗯\n" + note) == "嗯"
 
 
 def test_wechat_faces_become_what_they_show():

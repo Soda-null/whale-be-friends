@@ -121,8 +121,15 @@ class ReachPolicy:
             return self._plan_next_think(his)
         return self._dt("reach_next_think")
 
-    def record_considered(self, now: datetime) -> None:
+    def record_considered(self, now: datetime, offered: list[str] | tuple[str, ...] = ()) -> None:
+        """offered: the home lines this thought was shown; fresh() does not show them again."""
         self.kv.set("reach_last_considered", iso(now), now)
+        self.kv.set("reach_home_offered", json.dumps(list(offered), ensure_ascii=False), now)
+        self._plan_next_think(now)
+
+    def postpone(self, now: datetime) -> None:
+        """A thought that came due while she could not text (her nap, him in her room) comes back
+        a while later, not on the second she wakes or he leaves."""
         self._plan_next_think(now)
 
     def unanswered(self) -> int:
@@ -187,7 +194,10 @@ class ReachPolicy:
                 at -= timedelta(days=1)
             if at >= since.replace(second=0, microsecond=0):
                 kept.append(line)
-        return kept
+        # the room writes its line and she thinks of him in the same minute: lines are timed to
+        # the minute, so what the last thought was shown is kept by name
+        shown = set(json.loads(self.kv.get("reach_home_offered", "[]") or "[]"))
+        return [line for line in kept if line not in shown]
 
     def triggers(self, now: datetime, mood: Mood, home: list[str] | None = None) -> Triggers:
         """home: lines from her cottage's record for the last few hours, when she has one."""
@@ -259,9 +269,9 @@ class ReachNode:
         policy = ReachPolicy(self.conn, enabled=self.enabled, max_per_day=self.max_per_day)
         if policy.refused(now) is not None:
             return None
-        if self.room is not None and self.room.here(now):  # he is in her room: no need to text him (decision 41)
-            return None
-        if self.room is not None and self.room.napping(now):
+        # he is in her room: no need to text him (decision 41); nobody texts in their nap
+        if self.room is not None and (self.room.here(now) or self.room.napping(now)):
+            policy.postpone(now)
             return None
         mood = MoodStore.apply_clock(MoodStore(self.conn).load(), now, kitchen=self.room is not None)
         trig = policy.triggers(now, mood, home=self.room.lately(now, HOME_LATELY) if self.room is not None else [])
@@ -269,7 +279,7 @@ class ReachNode:
         # Only counted when there was a reason, the gate stayed open, and she texted the very
         # second something happened: 08:00, 12:00, 15:00 sharp. Before asking, so a crash cannot
         # loop on the model.
-        policy.record_considered(now)
+        policy.record_considered(now, trig.home)
         if not trig.any:
             return None
         room = ""

@@ -42,9 +42,11 @@ def test_a_nap_is_not_news_and_she_does_not_text_in_her_sleep(tmp_path):
     assert brain.cottage.act("nap", at).lines == ["躺下睡午觉了"]
     assert brain.home_lately(at + timedelta(minutes=1)) == [] and brain.room.napping(at + timedelta(minutes=1))
     assert brain.consider_reach_out(at + timedelta(minutes=1)) is None and asked == []
+    assert brain.consider_reach_out(at + timedelta(minutes=59)) is None  # every poll of the nap puts the thought off
     assert brain.cottage.advance(at + timedelta(minutes=61)).lines == ["午觉睡醒了"]
     assert brain.home_lately(at + timedelta(minutes=62)) == [] and not brain.room.napping(at + timedelta(minutes=62))
-    assert brain.consider_reach_out(at + timedelta(minutes=62)).text == "醒了"  # awake, and the follow-up is due
+    assert brain.consider_reach_out(at + timedelta(minutes=62)) is None  # not on the second she wakes
+    assert brain.consider_reach_out(at + timedelta(minutes=125)).text == "醒了"  # awake, and the follow-up is due
 
 
 def test_the_first_thought_of_the_day_is_not_on_the_stroke_of_eight(tmp_path):
@@ -66,3 +68,13 @@ def test_she_has_one_rice_cooker(tmp_path):
         c.act("rice", MON + timedelta(days=day, hours=1))
         c.advance(MON + timedelta(days=day, hours=3))
     assert c.load(MON + timedelta(days=3)).sink == ["电饭煲内胆"]
+
+
+def test_a_home_event_in_the_minute_of_a_thought_is_offered_once(tmp_path):
+    conn = connect(tmp_path / "fish.db")
+    policy = ReachPolicy(conn, rng=random.Random(1))
+    first, second = datetime(2026, 11, 3, 10, 0, 7), datetime(2026, 11, 3, 10, 48, 37)
+    assert policy.fresh(["10:00 青菜放坏了，扔了"], first) == ["10:00 青菜放坏了，扔了"]
+    policy.record_considered(first, ["10:00 青菜放坏了，扔了"])
+    # the same line again, and one the room wrote later in that same minute
+    assert policy.fresh(["10:00 青菜放坏了，扔了", "10:00 小葱蔫了"], second) == ["10:00 小葱蔫了"]

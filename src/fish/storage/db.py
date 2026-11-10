@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS prospective (
     due           TEXT NOT NULL,          -- YYYY-MM-DD
     created       TEXT NOT NULL,
     source_memory INTEGER,
-    status        TEXT NOT NULL           -- open | asked | expired
+    status        TEXT NOT NULL           -- open | asked | expired | settled
 );
 CREATE TABLE IF NOT EXISTS diary (
     day   TEXT PRIMARY KEY,               -- YYYY-MM-DD

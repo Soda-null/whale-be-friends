@@ -109,6 +109,7 @@ class Situation:
     nothing_found: bool = False  # he asks if she remembers and nothing came back (memory v3 §14)
     pages: list[Page] = field(default_factory=list)  # old chats she looked back at (memory/pages.py)
     last_line: datetime | None = None  # when the last line of today's chat was said, his or hers (brain/gap.py)
+    her_last: str = ""  # her line he is answering when this chat has none of hers yet: what she texted first
 
 
 PromptContext = Situation  # the name before step 2
@@ -316,14 +317,16 @@ def build_chat_messages(ctx: Situation) -> list[dict[str, str]]:
         user_text = f"{user_text}\n" + home_check(ctx.cottage)
     if ctx.face:
         user_text = f"{user_text}\n" + owner_words(FACE_NOW)
-    her_last = next((t.text for t in reversed(ctx.window) if t.role != "user"), "")
+    her_last = next((t.text for t in reversed(ctx.window) if t.role != "user"), ctx.her_last)
+    if ctx.user_image and not user_text:
+        user_text = owner_words("（他发了一张图）")
     for note in (gap_note(ctx.last_line, ctx.now), "" if ctx.user_image or ctx.shared else closing_note(ctx.user_text, her_last)):
         if note:  # how long ago the last line was; his line is only a nod or a goodbye
             user_text = f"{user_text}\n" + owner_words(note)
     if ctx.user_image:  # pictures may only ride in a user message (DeepSeek's rule)
         # With a picture in the message the model sometimes chats in prose before the JSON;
         # a reminder right next to the picture keeps it to the format.
-        text = (user_text or owner_words("（他发了一张图）")) + "\n（照“输出格式”，只输出一个 JSON 对象，say 里放你要说的话）"
+        text = user_text + "\n（照“输出格式”，只输出一个 JSON 对象，say 里放你要说的话）"
         messages.append({"role": "user", "content": [
             {"type": "text", "text": text},
             {"type": "image_url", "image_url": {"url": ctx.user_image}},

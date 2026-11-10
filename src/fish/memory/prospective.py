@@ -60,15 +60,12 @@ class ProspectiveStore:
     def add(self, text: str, due: str, *, source_memory: int | None = None,
             now: datetime | None = None) -> Followup | None:
         """None when she already has enough on her mind, or already means to ask this (the same
-        words, the same thing in other words, or the same memory it is about), or it holds a
-        secret (scrub.py)."""
+        words, or the same thing in other words), or it holds a secret (scrub.py)."""
         now = now or datetime.now()
         if secret(text):
             return None
         held = self.open()
-        if len(held) >= MAX_OPEN or any(_overlap(text, f.text) >= SAME_AS or same_topic(text, f.text)
-                                        or (source_memory is not None and f.source_memory == source_memory)
-                                        for f in held):
+        if len(held) >= MAX_OPEN or any(_overlap(text, f.text) >= SAME_AS or same_topic(text, f.text) for f in held):
             return None
         cur = self.conn.execute(
             "INSERT INTO prospective (text, due, created, source_memory, status)"
