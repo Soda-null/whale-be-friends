@@ -19,7 +19,7 @@ import json
 import random
 import sqlite3
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 from typing import Callable
 
 from fish.brain.ask import ask_json
@@ -29,14 +29,16 @@ from fish.brain.llm import LLM
 from fish.brain.parse import clean_say, texting
 from fish.brain.prompt import WEEKDAYS
 from fish.config import Settings, owner_words
-from fish.cottage import RoomNode, asleep_hours
+from fish.cottage import WAKE_AT, RoomNode, asleep_hours
 from fish.memory import Followup, Memory, Relationship, Window, iso, last_his_message, today_turns
 from fish.mood import Mood, MoodStore
 from fish.msgs import SheSaid, TimePassed
 from fish.urges import Scene, Urge, about_him
 
 THINK_PAUSE_MINUTES = (20, 60)  # how long until the thought "should I text him" comes back
-HOME_LATELY = timedelta(hours=1)  # cottage events still fresh enough to mention
+# Cottage events still fresh enough to mention: a little longer than the longest pause between
+# two thoughts, so what happened just after one thought is still there at the next.
+HOME_LATELY = timedelta(minutes=90)
 # WeChat drops bot messages to someone silent for 24 h without telling us (community docs),
 # so after this long she cannot reach him and waits.
 WINDOW_HOURS = 23
@@ -161,15 +163,37 @@ class ReachPolicy:
         if now - his > timedelta(hours=WINDOW_HOURS):
             return "out of reach"
         nxt = self.next_think()
-        if nxt is not None and now < nxt:
+        woke = datetime.combine(now.date(), WAKE_AT)
+        if nxt is None or nxt < woke:
+            # The first thought of the day comes a while after she wakes. Left over from last
+            # night it was long past, and with something due she texted at 08:00:07 every morning.
+            nxt = self._plan_next_think(woke)
+        if now < nxt:
             return "not yet"
         return None
+
+    def fresh(self, home: list[str], now: datetime) -> list[str]:
+        """What happened at home is a reason to text him once: at the first thought after it.
+        Offered again at every thought for an hour it was said two and three times ("小泡泡的水
+        该换了" at 10:27 and 15:00, 11-07): she said no and was asked again. What happened before
+        he last wrote had its chance in that chat. Lines are "HH:MM what", of the last hours."""
+        since = max((t for t in (self._dt("reach_last_considered"), self.last_his_message()) if t), default=None)
+        if since is None:
+            return home
+        kept = []
+        for line in home:
+            at = datetime.combine(now.date(), time.fromisoformat(line[:5]))
+            if at > now + timedelta(minutes=1):
+                at -= timedelta(days=1)
+            if at >= since.replace(second=0, microsecond=0):
+                kept.append(line)
+        return kept
 
     def triggers(self, now: datetime, mood: Mood, home: list[str] | None = None) -> Triggers:
         """home: lines from her cottage's record for the last few hours, when she has one."""
         his = self.last_his_message()
         silence = (now - his).total_seconds() / 3600 if his else 0.0
-        urges = about_him(Scene(self.conn, now, mood, tuple(home or ()), frozenset(self.shared_ids())))
+        urges = about_him(Scene(self.conn, now, mood, tuple(self.fresh(home or [], now)), frozenset(self.shared_ids())))
         last_sent = self._dt("reach_last_sent")
         return Triggers(urges, silence, self.unanswered(),
                         (now - last_sent).total_seconds() / 3600 if last_sent else None)
@@ -237,11 +261,17 @@ class ReachNode:
             return None
         if self.room is not None and self.room.here(now):  # he is in her room: no need to text him (decision 41)
             return None
+        if self.room is not None and self.room.napping(now):
+            return None
         mood = MoodStore.apply_clock(MoodStore(self.conn).load(), now, kitchen=self.room is not None)
         trig = policy.triggers(now, mood, home=self.room.lately(now, HOME_LATELY) if self.room is not None else [])
+        # The thought crossed her mind, with or without a reason: the next comes after a pause.
+        # Only counted when there was a reason, the gate stayed open, and she texted the very
+        # second something happened: 08:00, 12:00, 15:00 sharp. Before asking, so a crash cannot
+        # loop on the model.
+        policy.record_considered(now)
         if not trig.any:
             return None
-        policy.record_considered(now)  # before asking, so a crash cannot loop on the model
         room = ""
         if self.room is not None:
             room = "\n".join(x for x in (self.room.him(now).text, self.room.view(now, mood.hunger)) if x)

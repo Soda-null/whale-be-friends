@@ -34,8 +34,8 @@ PICKS = {"nothing": "发呆", "news": "翻新闻", "bilibili": "刷 B 站", "boo
 DEEDS = (("sow", "种下", "种下了"), ("water", "浇水", "浇了水"), ("pick", "摘菜", "，放进冰箱"),
          ("feed", "喂鱼", "喂了鱼食"), ("change", "换水", "换了缸里的水"), ("namefish", "起名", "起了名字"),
          ("lake", "码头", "出门去湖边码头"), ("florist", "花店", "出门去镇上的花店"), ("shop", "买菜", "出门去镇上的菜店"),
-         ("rice", "煮饭", "煮"), ("cook", "做饭", "开始做"), ("wash", "洗碗", "开始洗碗"), ("bed", "叠被子", "叠了被子"),
-         ("nap", "午觉", "睡了个午觉"), ("leave", "给他留东西", "给他留了"))
+         ("rice", "煮饭", "煮"), ("cook", "做饭", "开始做"), ("wash", "洗碗", "开始洗"), ("bed", "叠被子", "叠了被子"),
+         ("nap", "午觉", "睡午觉了"), ("nap", "午觉", "睡了个午觉"), ("leave", "给他留东西", "给他留了"))
 DEED_NAME = {key: name for key, name, _ in DEEDS}
 # The things worth asking "did she really do it": these four are what the record can also tell us.
 THINGS = (("种菜", ("sow", "water", "pick")), ("养鱼", ("feed", "change", "namefish")), ("码头", ("lake",)), ("花店", ("florist",)))

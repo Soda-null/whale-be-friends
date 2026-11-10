@@ -114,6 +114,7 @@ class Cottage(ActionsMixin, ShopMixin, VisitorMixin, DrawerMixin, GuestMixin, Hi
             done = datetime.fromisoformat(room.until)
             if room.doing == ACTIONS["nap"].doing:
                 room.bed = "乱"
+                self.note(room, done, "午觉睡醒了", change, routine=True)
                 change.slept.append((done - timedelta(minutes=ACTIONS["nap"].minutes), done))
             if room.pending.get("buy") is not None:  # home from the shop: what she bought is in now (decision 35)
                 self._shop_home(room, done, change)

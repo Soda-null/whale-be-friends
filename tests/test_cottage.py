@@ -282,10 +282,15 @@ def test_what_happened_at_home_is_a_reason_to_text_him(tmp_path):
     brain.cottage.load(MON - timedelta(days=4))  # the greens are four days old by now
     assert brain.consider_reach_out(MON) is None and prompts == []  # nothing has happened yet
     assert "青菜放坏了，扔了" in brain.cottage.advance(MON).lines
-    assert brain.consider_reach_out(MON).text == "青菜放坏了，心疼"
+    assert brain.consider_reach_out(MON) is None  # she just thought of him: the next thought comes after a pause
+    soon = MON + timedelta(minutes=61)
+    assert brain.consider_reach_out(soon).text == "青菜放坏了，心疼"
     assert "- 家里的事：10:00 青菜放坏了，扔了" in prompts[-1]
     later = MON + timedelta(hours=4)
     assert ReachPolicy(conn).triggers(later, brain.moods.load(), home=brain.home_lately(later)).home == []
+    # a reason once: at the thought after that one it is still within the hour and a half, and not offered again
+    again = soon + timedelta(minutes=20)
+    assert brain.home_lately(again) and ReachPolicy(conn).triggers(again, brain.moods.load(), home=brain.home_lately(again)).home == []
 
 
 def test_a_meal_on_time_is_not_news_and_her_lone_message_is_not_his(tmp_path):
@@ -539,9 +544,9 @@ def test_several_things_left_at_once_and_washing_takes_its_minutes(tmp_path):
     c.save(room)
     later = MON + timedelta(minutes=2)
     c.advance(later)  # leaving them took its minute
-    assert c.act("wash", later, "").lines == ["开始洗碗"]
+    assert c.act("wash", later, "").lines == ["开始洗水槽里的锅"]
     assert c.load(later).sink == ["锅"]  # still in the sink while she washes
-    assert c.advance(later + timedelta(minutes=11)).lines == ["洗完了碗"]
+    assert c.advance(later + timedelta(minutes=11)).lines == ["水槽里的都洗干净了"]
     assert c.load(later + timedelta(minutes=11)).sink == []
 
 

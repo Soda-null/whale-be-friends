@@ -96,7 +96,8 @@ class ActionsMixin:
             if two and room.rice > 0:
                 room.rice -= 1
             if key == "rice":
-                room.sink.append("电饭煲内胆")
+                if "电饭煲内胆" not in room.sink:  # she has one rice cooker: the sink once held three of its pots
+                    room.sink.append("电饭煲内胆")
                 line = (f"开始煮{meal}的白饭" if meal else "开始煮一锅白饭") + ("（两人份）" if two else "")
                 done = f"{meal}的白饭煮好了，" if meal else "白饭煮好了，"
                 done += "和他一起吃了" if two else "吃了"
@@ -111,14 +112,20 @@ class ActionsMixin:
                 done = (f"{meal}做好了，" if meal else "饭做好了，") + ("和他一起吃了" if two else "吃了") + f"（{'、'.join(used)}）"
             room.pending = {"hunger": action.hunger, "line": done, "routine": routine}
         elif key == "wash":
-            line = "开始洗碗"
+            # what is in the sink by name: it only ever holds pots, and "洗碗" made her say 锅 one
+            # minute and 碗 the next (11-07)
+            line = f"开始洗水槽里的{'、'.join(dict.fromkeys(room.sink))}"
             room.pending = {"wash": True, "routine": routine}  # the sink is clean when she is done
         elif key == "bed":
             room.bed = "叠好"
             line = "叠了被子"
         elif key == "nap":
+            # Lying down, not "睡了个午觉": that line, written as she lay down, was news to text him
+            # with, and she texted "醒了" at the minute she fell asleep (11-07, 11-08). Like a meal on
+            # time it is the day going as days go; waking is noted when it happens (room.advance).
             room.bed = "在睡"
-            line = "睡了个午觉"
+            line = "躺下睡午觉了"
+            routine = True
         elif key == "leave":
             names = _leaving(room, arg)
             if names[0].startswith(NOTE_PREFIX):
@@ -153,7 +160,7 @@ class ActionsMixin:
         cooking; the sink is clean now, not when she started washing."""
         if room.pending.get("wash"):
             room.sink.clear()
-            self.note(room, done, "洗完了碗", change, routine=room.pending.get("routine", False))
+            self.note(room, done, "水槽里的都洗干净了", change, routine=room.pending.get("routine", False))
             room.pending = {}
         elif room.pending:
             self.note(room, done, room.pending["line"], change, routine=room.pending.get("routine", False))

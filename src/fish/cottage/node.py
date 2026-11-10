@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 
 from fish.bus import Bus
 from fish.cottage.room import Cottage
+from fish.cottage.rules import ACTIONS
 from fish.msgs import HisStatus, HomeEvent, MoodMoved, SheAte, SheSlept, TimePassed
 
 
@@ -90,6 +91,13 @@ class RoomNode:
         """He is at her place right now (decision 41)."""
         try:
             return self.cottage.guest_here(self.cottage.load(now), now)
+        except ValueError:
+            return False
+
+    def napping(self, now: datetime) -> bool:
+        """She is having her nap right now: nobody texts in their sleep."""
+        try:
+            return self.cottage.load(now).doing == ACTIONS["nap"].doing
         except ValueError:
             return False
 
