@@ -82,7 +82,7 @@ def test_she_shares_what_she_saw_and_it_is_recorded_once_sent(tmp_path):
     policy = ReachPolicy(conn)
     assert policy.count_today(NOON) == 1 and policy.shared_ids() == {1}
     # the same 见闻 is not offered again
-    assert brain.consider_reach_out(NOON + timedelta(hours=7)) is None
+    assert brain.consider_reach_out(NOON + timedelta(hours=2)) is None  # (an hour more of his silence and she is bored)
 
 
 def test_a_failed_send_records_nothing(tmp_path):

@@ -3,7 +3,12 @@
 # about him: the reach-out triggers of decisions 10, 26 and 30, moved here unchanged
 SILENCE_HOURS = 18  # he has not written for this long
 BORED_LEVEL, BORED_SILENCE_HOURS = 60, 6  # bored, and he has been quiet a while
-SHARE_IMPORTANCE = 4  # something she saw today, worth telling him
+# Quiet hours bore her too (decision 57): her boredom only moved with chat turns and sat near 7
+# of 100 for two weeks, so "bored" never once was a reason to text him.
+BORED_PER_QUIET_HOUR = 8
+# Something she saw today, worth telling him. 4 until decision 57: of 29 things she noted in two
+# weeks, 2 reached it, and every message she sent first was a follow-up or a chore at home.
+SHARE_IMPORTANCE = 3
 SHARE_AT_MOST = 3
 ANNIVERSARIES = (7, 30, 100, 365, 730)  # and every hundred days
 

@@ -39,6 +39,10 @@ FACT_REPEAT_SIMILARITY = 0.8  # facts differ by one number when he corrects hims
 # she tells the same thread in new words each night ("数米粒" 27 ways in a year), so a looser bar,
 # and no more than KIND_CAPS["self"] of them alive.
 SELF_REPEAT_SIMILARITY = 0.35
+# One piece of news noted twice in one chat (decision 57): as a fact and as an event in the same
+# turn, or again a few turns on in other words. The real store held about thirty such pairs; with
+# a tag hit both copies came back and took two of the six places of what his line brings to mind.
+SAME_CHAT_KINDS, SAME_CHAT_SIMILARITY = ("fact", "event"), 0.7
 KIND_CAPS = {"insight": 20, "howto": 20, "self": 30}  # beyond this the least stable is pushed out
 # Notes about the chat itself (he is testing her memory, she could not recall) are not things about
 # him: "他欠我一样东西，具体是什么我记不清了" would later read as a debt she knows of.
@@ -399,6 +403,9 @@ class MemoryStore:
         if same is not None and not self.adds_detail(text, same):
             again = self.happened_again(same.id, now)
             return self.raise_to(again, about, fields.get("arousal", 0.0), pact, state)
+        twin = self.said_in_chat(kind, text, fields.get("source_episode"))
+        if twin is not None and not self.adds_detail(text, twin):
+            return self.raise_to(twin, about, fields.get("arousal", 0.0), pact, state)  # said once, not twice
         if kind in RULE_KINDS:
             about = UNCONFIRMED  # however sure the model sounds, one day is one day
             fields["stability"] = st.UNCONFIRMED_DAYS
@@ -434,6 +441,19 @@ class MemoryStore:
                 sim = max(sim, threshold)
             if sim >= threshold and (best is None or sim > best[0]):
                 best = (sim, m)
+        return best[1] if best else None
+
+    def said_in_chat(self, kind: str, text: str, episode: int | None) -> Memory | None:
+        """The fact or event of the same chat that already says this, whichever of the two it was
+        filed as. Not counted as happening again: it was said once."""
+        if episode is None or kind not in SAME_CHAT_KINDS:
+            return None
+        best: tuple[float, Memory] | None = None
+        for m in self.alive():
+            if m.kind in SAME_CHAT_KINDS and m.source_episode == episode:
+                sim = overlap(text, m.text)
+                if sim >= SAME_CHAT_SIMILARITY and (best is None or sim > best[0]):
+                    best = (sim, m)
         return best[1] if best else None
 
     @staticmethod

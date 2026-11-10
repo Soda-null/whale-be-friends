@@ -9,6 +9,7 @@ from pathlib import Path
 
 from fish.brain import budget
 from fish.brain.closing import closing_note
+from fish.brain.comfort import comfort_note
 from fish.brain.gap import gap_note
 from fish.config import owner_words
 from fish.memory import (DAY_LIMIT, DayChat, Followup, Memory, Page, Phase, Recalled, Sticker, Turn, fit_day_chat,
@@ -320,8 +321,10 @@ def build_chat_messages(ctx: Situation) -> list[dict[str, str]]:
     her_last = next((t.text for t in reversed(ctx.window) if t.role != "user"), ctx.her_last)
     if ctx.user_image and not user_text:
         user_text = owner_words("（他发了一张图）")
-    for note in (gap_note(ctx.last_line, ctx.now), "" if ctx.user_image or ctx.shared else closing_note(ctx.user_text, her_last)):
-        if note:  # how long ago the last line was; his line is only a nod or a goodbye
+    hurt = comfort_note(ctx.user_text)  # he is hurting: that comes before "only a nod"
+    for note in (gap_note(ctx.last_line, ctx.now), hurt,
+                 "" if hurt or ctx.user_image or ctx.shared else closing_note(ctx.user_text, her_last)):
+        if note:  # how long ago the last line was; he is hurting; his line is only a nod or a goodbye
             user_text = f"{user_text}\n" + owner_words(note)
     if ctx.user_image:  # pictures may only ride in a user message (DeepSeek's rule)
         # With a picture in the message the model sometimes chats in prose before the JSON;

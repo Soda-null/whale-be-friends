@@ -42,6 +42,7 @@ HOME_LATELY = timedelta(minutes=90)
 # WeChat drops bot messages to someone silent for 24 h without telling us (community docs),
 # so after this long she cannot reach him and waits.
 WINDOW_HOURS = 23
+ONCE_KEPT = 80  # keys of one-time reasons remembered (a few days of sights)
 
 
 @dataclass
@@ -121,11 +122,28 @@ class ReachPolicy:
             return self._plan_next_think(his)
         return self._dt("reach_next_think")
 
-    def record_considered(self, now: datetime, offered: list[str] | tuple[str, ...] = ()) -> None:
-        """offered: the home lines this thought was shown; fresh() does not show them again."""
+    def record_considered(self, now: datetime, offered: list[str] | tuple[str, ...] = (),
+                          once: list[str] | tuple[str, ...] = ()) -> None:
+        """offered: the home lines this thought was shown; fresh() does not show them again.
+        once: the keys of what this thought was shown that is a reason one time only (once_key)."""
         self.kv.set("reach_last_considered", iso(now), now)
         self.kv.set("reach_home_offered", json.dumps(list(offered), ensure_ascii=False), now)
+        if once:
+            self.kv.set("reach_once", json.dumps((self.offered_once() + list(once))[-ONCE_KEPT:]), now)
         self._plan_next_think(now)
+
+    def offered_once(self) -> list[str]:
+        return list(json.loads(self.kv.get("reach_once", "[]") or "[]"))
+
+    def once_key(self, u: Urge) -> str | None:
+        """Something she saw, and being bored in one stretch of his silence, are a reason to text
+        him at one thought (decision 57): she may say no, and no stays no. Asked again every
+        20-60 minutes all day, sooner or later she said it. None: what may be offered again."""
+        if u.source == "seen":
+            return f"seen:{u.ref.id}"
+        if u.source == "bored":
+            return f"bored:{self.last_his_message()}"  # once in each stretch of his silence
+        return None
 
     def postpone(self, now: datetime) -> None:
         """A thought that came due while she could not text (her nap, him in her room) comes back
@@ -203,7 +221,10 @@ class ReachPolicy:
         """home: lines from her cottage's record for the last few hours, when she has one."""
         his = self.last_his_message()
         silence = (now - his).total_seconds() / 3600 if his else 0.0
-        urges = about_him(Scene(self.conn, now, mood, tuple(self.fresh(home or [], now)), frozenset(self.shared_ids())))
+        said_no = set(self.offered_once())
+        urges = [u for u in about_him(Scene(self.conn, now, mood, tuple(self.fresh(home or [], now)),
+                                            frozenset(self.shared_ids())))
+                 if self.once_key(u) not in said_no]
         last_sent = self._dt("reach_last_sent")
         return Triggers(urges, silence, self.unanswered(),
                         (now - last_sent).total_seconds() / 3600 if last_sent else None)
@@ -279,7 +300,7 @@ class ReachNode:
         # Only counted when there was a reason, the gate stayed open, and she texted the very
         # second something happened: 08:00, 12:00, 15:00 sharp. Before asking, so a crash cannot
         # loop on the model.
-        policy.record_considered(now, trig.home)
+        policy.record_considered(now, trig.home, [k for k in map(policy.once_key, trig.urges) if k])
         if not trig.any:
             return None
         room = ""

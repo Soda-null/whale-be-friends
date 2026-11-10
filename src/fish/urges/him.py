@@ -7,8 +7,8 @@ from __future__ import annotations
 
 from fish.config import owner_words
 from fish.memory import DUE_SHOWN, MemoryStore, ProspectiveStore, Relationship, last_his_message
-from fish.urges.rules import (ANNIVERSARIES, BORED_LEVEL, BORED_SILENCE_HOURS, SHARE_AT_MOST, SHARE_IMPORTANCE,
-                              SILENCE_HOURS)
+from fish.urges.rules import (ANNIVERSARIES, BORED_LEVEL, BORED_PER_QUIET_HOUR, BORED_SILENCE_HOURS, SHARE_AT_MOST,
+                              SHARE_IMPORTANCE, SILENCE_HOURS)
 from fish.urges.urge import HIM, Scene, Urge
 
 
@@ -50,7 +50,10 @@ def anniversary(s: Scene) -> list[Urge]:
 
 
 def bored(s: Scene) -> list[Urge]:
-    return [Urge(HIM, "bored", "你有点无聊")] if s.mood.boredom >= BORED_LEVEL and silence_hours(s) >= BORED_SILENCE_HOURS else []
+    quiet = silence_hours(s)
+    if quiet < BORED_SILENCE_HOURS or s.mood.boredom + BORED_PER_QUIET_HOUR * quiet < BORED_LEVEL:
+        return []
+    return [Urge(HIM, "bored", "你有点无聊")]
 
 
 def home(s: Scene) -> list[Urge]:
