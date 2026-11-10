@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Callable
 
 from fish.channels.base import Incoming, Reply
+from fish.channels.emoji import readable
 from fish.messages import SharedFile
 from fish.channels.ilink import (LOGIN_BASE, MSG_USER, TYPING, TYPING_CANCEL, ILinkClient,
                                  ILinkError, SessionExpired, file_item_of, image_item_of, text_of)
@@ -336,7 +337,7 @@ class WeChatChannel:
                     shared = SharedFile(name, self.client.download_file(f_item))
                 except ILinkError as e:
                     self.out(f"（他发的文件没取到：{e}）")
-            text = text_of(msg)
+            text = readable(text_of(msg))
             if text and not (item is not None and text == "[图片]" and image is not None):
                 (old_texts if msg in stale else texts).append(text)
         text = join_fragments(texts)

@@ -16,9 +16,9 @@ GRACE_DAYS = 1  # an open follow-up this many days past due is given up on
 MAX_OPEN = 5  # no new follow-up while this many are open
 SAME_AS = 0.5  # bigram overlap at which a new follow-up repeats an open one
 DUE_SHOWN = 2  # due follow-ups offered to her in one turn
-# One question in other words ("问他实习简历有没有回音" / "简历那边后来有回音了吗") scores far under SAME_AS:
-# the real store held three copies of it with three due days, and she asked on all three mornings
-# (11-05, 11-06, 11-09). Without the words every question has, the shorter one mostly lies in the longer.
+# One question in other words ("问他科目二有没有消息" / "科目二那边后来有消息了吗") scores far under SAME_AS:
+# the real store held three copies of one question with three due days, and she asked on all three
+# mornings. Without the words every question has, the shorter one mostly lies in the longer.
 FILLER = re.compile(r"问问他|问他|到底|后来|那边|怎么样|\d+月\d+日|[的了吗没有得，。？?！、\s]")
 SAME_TOPIC, SAME_TOPIC_LONGER = 0.5, 0.4  # share of the shorter question's bigrams found in the other, and of the longer's
 

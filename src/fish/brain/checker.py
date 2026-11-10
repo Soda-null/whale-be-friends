@@ -23,10 +23,17 @@ def talks_of_home(said: str) -> bool:
     return bool(said.strip()) and CHECK_WORDS.search(said) is not None
 
 
-def check_home(llm: LLM, record: str, his: str, said: str) -> tuple[str, str]:
-    """Her line, mended where it does not match the record; and why, "" when nothing changed."""
-    if not record or not talks_of_home(said):
+REFUSED = "- 这一轮她说要去做「{what}」，屋里没让她开始（她手上有别的事、人在外面，或者现在做不成）：这件事没开始\n"
+
+
+def check_home(llm: LLM, record: str, his: str, said: str, refused: str = "") -> tuple[str, str]:
+    """Her line, mended where it does not match the record; and why, "" when nothing changed.
+    refused: what she said she was off to do this turn and the room did not start; the record
+    says so first, and "这就去换水" is cut like any other thing that did not happen."""
+    if not record or not (talks_of_home(said) or refused):
         return said, ""
+    if refused:
+        record = REFUSED.format(what=refused) + record
     data = ask_json(llm, "home_check", record=record, his=his or FIRST, said=said,
                     temperature=0.0, max_tokens=500)
     if not data or data.get("ok") is not False:

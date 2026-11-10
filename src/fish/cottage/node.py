@@ -94,6 +94,11 @@ class RoomNode:
         except ValueError:
             return False
 
+    @staticmethod
+    def name_of(key: str) -> str:
+        """What a chore is called ("change" -> "给鱼缸换水"); the key itself when there is no such chore."""
+        return ACTIONS[key].doing if key in ACTIONS else key
+
     def napping(self, now: datetime) -> bool:
         """She is having her nap right now: nobody texts in their sleep."""
         try:

@@ -229,6 +229,10 @@ class Cottage(ActionsMixin, ShopMixin, VisitorMixin, DrawerMixin, GuestMixin, Hi
         wanted.append("food")
         picked = list(dict.fromkeys(wanted))[:3]
         out = [x for x in (self.doing_line(room, chatting=True, now=now),) if x]
+        if room.doing and room.doing != "睡觉":
+            # Busy or out, nothing else can start (offers() is empty), and nobody told her: on the
+            # way back from the flower shop she said "这就去喂" three times and no fish was fed (11-08)
+            out.append("这件事没完之前，屋里别的事开始不了：别说\"我这就去喂\"\"我先去洗\"，要做也是等会儿的事。")
         out.append("屋里：" + "；".join(all_lines[k] for k in picked) + "。")
         done = self.today(room, now)[-TODAY_SHOWN:]
         # said even when nothing happened: otherwise she goes by what she said in the chat (10-29:

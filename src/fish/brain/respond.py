@@ -203,8 +203,10 @@ class Brain:
         reply, seen_source = self.replier.reply(sit)
         if sit.face:  # nobody hands over a sticker across the table (decision 51)
             reply.sticker = None
+        refused = ""
         if reply.do and self.room is not None:  # she said she is off to do it: the room does it now
-            self.room.act(reply.do, now, reply.do_arg)
+            if not self.room.act(reply.do, now, reply.do_arg):
+                refused = self.room.name_of(reply.do)  # busy, out, or not possible now: the checker is told
         he_left = reply.guest == "leave"
         if reply.guest and self.room is not None:  # he says he is at her door, or going home (decision 41)
             self.room.visit(reply.guest, now, reply.guest_since, reply.guest_until, reply.guest_why)
@@ -215,7 +217,7 @@ class Brain:
         if reply.he_doing and not he_left and self.room is not None:
             self.room.he_is_doing(reply.he_doing, now)
         if self.room is not None:  # what she says of her home, held against the room (decision 38)
-            reply.say, why = check_home(self.llm, self.room.record(now), incoming.text, reply.say)
+            reply.say, why = check_home(self.llm, self.room.record(now), incoming.text, reply.say, refused)
             if why:
                 self.home_fixes.append({"at": now.isoformat(timespec="minutes"), "why": why, "said": reply.say})
         return self.remember_turn(incoming, reply, seen_source, shared_note, ep.id, now, channel)
@@ -228,7 +230,9 @@ class Brain:
         shared, shared_note = self.open_shared(incoming)
         image = incoming.image
         him = self.room.him(now) if self.room is not None else HisStatus()
+        said = r.day.current or (r.day.earlier[-1].turns if r.day.earlier else ())
         sit = Situation(
+            last_line=datetime.fromisoformat(said[-1].ts) if said else None,
             persona=self.persona, now=now, mood=mood,
             relationship=self.relationship.stats(now),
             profile=r.profile, mentioned={m.id for m in r.touched}, formers=r.formers,

@@ -8,6 +8,8 @@ from datetime import date, datetime
 from pathlib import Path
 
 from fish.brain import budget
+from fish.brain.closing import closing_note
+from fish.brain.gap import gap_note
 from fish.config import owner_words
 from fish.memory import (DAY_LIMIT, DayChat, Followup, Memory, Page, Phase, Recalled, Sticker, Turn, fit_day_chat,
                          spoken, told_day)
@@ -106,6 +108,7 @@ class Situation:
     stars: dict[int, str] = field(default_factory=dict)  # pact id -> the trigger his line said
     nothing_found: bool = False  # he asks if she remembers and nothing came back (memory v3 §14)
     pages: list[Page] = field(default_factory=list)  # old chats she looked back at (memory/pages.py)
+    last_line: datetime | None = None  # when the last line of today's chat was said, his or hers (brain/gap.py)
 
 
 PromptContext = Situation  # the name before step 2
@@ -195,7 +198,8 @@ HOME_WORDS = re.compile(r"米|冰箱|菜|窗台|买|饭|吃|葱|蛋|碗|锅|床|
 def home_check(cottage: str) -> str:
     lines = [x for x in cottage.splitlines() if not x.startswith("你现在能做的")]
     return owner_words("（屋里此刻：" + " ".join(lines) + " 说屋里的事照这个：做了什么菜、吃了什么、给他留了什么，只说这里有的，"
-                       "别添；谁放的就说谁放的。跟你前面聊天里说的对不上，就是那时没做成，顺口改口）")
+                       "别添；谁放的就说谁放的。跟你前面聊天里说的对不上，就是那时没做成，顺口改口。"
+                       "他要是在说他自己吃什么、买什么、在哪，就接他的事，这段只是备查，不用提屋里）")
 
 
 # Said right at his line, like what her room says: in the middle of the prompt a rule loses to the
@@ -312,6 +316,10 @@ def build_chat_messages(ctx: Situation) -> list[dict[str, str]]:
         user_text = f"{user_text}\n" + home_check(ctx.cottage)
     if ctx.face:
         user_text = f"{user_text}\n" + owner_words(FACE_NOW)
+    her_last = next((t.text for t in reversed(ctx.window) if t.role != "user"), "")
+    for note in (gap_note(ctx.last_line, ctx.now), "" if ctx.user_image or ctx.shared else closing_note(ctx.user_text, her_last)):
+        if note:  # how long ago the last line was; his line is only a nod or a goodbye
+            user_text = f"{user_text}\n" + owner_words(note)
     if ctx.user_image:  # pictures may only ride in a user message (DeepSeek's rule)
         # With a picture in the message the model sometimes chats in prose before the JSON;
         # a reminder right next to the picture keeps it to the format.

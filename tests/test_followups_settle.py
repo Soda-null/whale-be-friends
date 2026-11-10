@@ -39,13 +39,13 @@ def make_brain(tmp_path, close: dict):
 
 
 def test_one_question_in_other_words_is_one_follow_up(tmp_path):
-    assert same_topic("问他实习简历有没有回音", "简历那边后来有回音了吗")
+    assert same_topic("问他驾照科目二有没有消息", "科目二那边后来有消息了吗")
     assert same_topic("演示的照片拍到了没", "问问他演示照片到底拍了没")
     assert not same_topic("期末考完去海边了吗", "问问他期末考得怎么样")
     assert not same_topic("问他今天考试考得怎么样", "问他面试怎么样")
     later = ProspectiveStore(connect(tmp_path / "fish.db"))
-    assert later.add("问他实习简历有没有回音", "2027-01-12", now=T0) is not None
-    assert later.add("简历那边后来有回音了吗", "2027-01-15", now=T0) is None
+    assert later.add("问他驾照科目二有没有消息", "2027-01-12", now=T0) is not None
+    assert later.add("科目二那边后来有消息了吗", "2027-01-15", now=T0) is None
     assert later.add("问他驾照考过了没", "2027-01-13", source_memory=7, now=T0) is not None
     assert later.add("科目二怎么样了", "2027-01-16", source_memory=7, now=T0) is None  # about the same memory
 

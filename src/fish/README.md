@@ -22,7 +22,7 @@
 | `memory/phase.py` | 性格中间层：基调、劲头、在意的事、一句话，`update` 每晚八成旧两成新 | 能用 |
 | `memory/traits.py` | 性格底色层：五根有界滑杆，`apply` 一次最多挪 0.15，`describe` 只说挪得明显的；每月的"回头看"笔记 | 能用 |
 | `memory/relationship.py` | 关系账：认识天数、连续天数、**亲近值**按天涨（每轮 +0.3、开心 +1，但一天最多 +2，熟了以后 +1、很熟以后 +0.8；没聊的日子 −0.5；决定 17） | 能用 |
-| `brain/` | 所有模型调用都在这：`respond.py` 是接线员（节点化第 2 步）：问各节点要答案装成 `Situation` → 交给 `reply.py` → 记下这一轮（收尾旧情景、折叠也在这）；`reply.py` 是大脑本身，只认 `Situation`：拼提示词、问、读回复、查一下；`checker.py` 是检查员（决定 38）：她要发的话提到屋里的事，先对着小屋的完整记录查一遍，只删错的、或把错的几个字换成记录里的原话，改不了就原样发；`home_command.py` 把他对小屋说的大白话翻成放 / 拿（`fish home`，决定 36），照小屋的规则做；`prompt.py` 按 `prompts/*.md` 渲染；`budget.py` 字数预算；`parse.py` 读 JSON 回复；`llm.py`：`DeepSeekLLM`（JSON 模式）、`FakeLLM`、`CountingLLM`（数调用，体检用） | 能用，寝室机上真跑着 |
+| `brain/` | 所有模型调用都在这：`respond.py` 是接线员（节点化第 2 步）：问各节点要答案装成 `Situation` → 交给 `reply.py` → 记下这一轮（收尾旧情景、折叠也在这）；`reply.py` 是大脑本身，只认 `Situation`：拼提示词、问、读回复、查一下；`checker.py` 是检查员（决定 38）：她要发的话提到屋里的事，先对着小屋的完整记录查一遍，只删错的、或把错的几个字换成记录里的原话，改不了就原样发；`home_command.py` 把他对小屋说的大白话翻成放 / 拿（`fish home`，决定 36），照小屋的规则做；`prompt.py` 按 `prompts/*.md` 渲染；`budget.py` 字数预算；`parse.py` 读 JSON 回复；`llm.py`：`DeepSeekLLM`（JSON 模式）、`FakeLLM`、`CountingLLM`（数调用，体检用）；`closing.py` 他那句只是应一声或道别时贴在他那句后面的提醒、`gap.py` 上一句话隔了多久的提醒（决定 56，都只进提示词不存） | 能用，寝室机上真跑着 |
 | `brain/prompts/` | `gist.md`（夜里把反复的事改写成大意，决定 20）；聊天：`chat.md`（人设 + 怎么回 + 输出格式 + 底牌 / 日记 / 现在 / 想起 / 惦记 / 摘要）、`fold.md`（折叠窗口）、`close_episode.md`（收尾聊天）；夜里：`merge.md`（合并重复）、`contradictions.md`（新事实取代旧的）、`reflect.md`（反思）、`diary.md`（日记和生活线）；用户能直接改 | 能用 |
 | `brain/consolidate.py` | 夜里的四次模型调用（合并、取代、反思、日记），回复坏了就当"今晚不做" | 能用 |
 | `brain/world.py` | 逛的两次模型调用：从今天的标题里挑最多 3 条、看完写见闻和新念头（`prompts/browse_pick.md`、`browse_read.md`）；`brain/ask.py` 是它们共用的"问一句拿 JSON" | 能用 |
@@ -40,7 +40,7 @@
 | `clock.py` | 时钟节点：每格发 `TimePassed`（手动拨回去也发），往前跨过 03:30 发 `DayEnded`（睡了几晚就补几天，同一天不发两次）；`day_of` 算一个时刻属于她哪一天 | 第 3 步起接进服务：`Brain.tick` 就是走一格 |
 | `app.py` | 启动文件（节点化第 3 步）：一张表写谁订什么、按什么顺序；只认 `bus` 和 `msgs`，节点作为参数交进来。**加一个跟时间或她的话有关的新功能 = 这里加一行** | 能用 |
 | `messages.py` | 电话线和大脑之间传的 `Incoming(text, image, file)` / `Outgoing(text, sticker)`，和图片类型探测、data URL | 能用 |
-| `channels/` | `one_line.py` 第二条她开不起来（决定 52）；`terminal.py`；`ilink.py` 腾讯 ClawBot 的 HTTP 协议（照官方插件 2.4.10：扫码登录、长轮询 `getupdates`、`sendmessage`、正在输入；收图下载解密、上传发图，AES-128-ECB），`wechat.py` 微信电话线（`login` 扫码存凭证；`WeChatChannel` 只回主人、去重、每行一个气泡、文字后发表情包、出错退避、-14 提示重扫；每轮轮询之间 `tick` 让她有机会先开口，`push` 用上次的对话凭证发） | 文字和图片真机验证过 |
+| `channels/` | `emoji.py` 把微信小黄脸的英文代号换成她看得懂的字（决定 56）；`one_line.py` 第二条她开不起来（决定 52）；`terminal.py`；`ilink.py` 腾讯 ClawBot 的 HTTP 协议（照官方插件 2.4.10：扫码登录、长轮询 `getupdates`、`sendmessage`、正在输入；收图下载解密、上传发图，AES-128-ECB），`wechat.py` 微信电话线（`login` 扫码存凭证；`WeChatChannel` 只回主人、去重、每行一个气泡、文字后发表情包、出错退避、-14 提示重扫；每轮轮询之间 `tick` 让她有机会先开口，`push` 用上次的对话凭证发） | 文字和图片真机验证过 |
 | `memory/stickers.py` | 表情包相册：存图、起叫法、按用过次数排、记用过；同一张图按指纹只收一次；`offer` 每轮给她看常用的 12 张加随机换的其余，相册再大也轮得到没用过的 | 能用 |
 | `routines/stickers.py` | 送她表情包：`import_folder` 把一个文件夹的图拷进收件箱，`adopt_inbox` 一张张让她起叫法收下（`fish stickers` 当场全收，夜里一晚 10 张） | 能用 |
 | `panel/` | 本机网页面板（决定 54）：`box.py` 连她那台机器跑命令，`parse.py` 把命令输出变成页面要的数据，`server.py` 只听本机的小服务器，`page.html` 页面，`img/` 从 README 的两张图切的图；`python -m fish.panel` | 能用 |

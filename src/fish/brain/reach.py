@@ -174,9 +174,9 @@ class ReachPolicy:
 
     def fresh(self, home: list[str], now: datetime) -> list[str]:
         """What happened at home is a reason to text him once: at the first thought after it.
-        Offered again at every thought for an hour it was said two and three times ("小泡泡的水
-        该换了" at 10:27 and 15:00, 11-07): she said no and was asked again. What happened before
-        he last wrote had its chance in that chat. Lines are "HH:MM what", of the last hours."""
+        Offered again at every thought for an hour, it was said two and three times in one day:
+        she said no and was asked again. What happened before he last wrote had its chance in
+        that chat. Lines are "HH:MM what", of the last hours."""
         since = max((t for t in (self._dt("reach_last_considered"), self.last_his_message()) if t), default=None)
         if since is None:
             return home
