@@ -7,7 +7,7 @@ comes back.
 from __future__ import annotations
 
 from fish.brain.llm import LLM
-from fish.brain.parse import Reply, parse_reply, parse_retry, texting
+from fish.brain.parse import Reply, parse_reply, parse_retry, split_sticker_placeholder, texting
 from fish.brain.prompt import REMINDERS, Situation, build_chat_messages
 from fish.config import owner_words
 from fish.world import Searcher
@@ -51,6 +51,12 @@ class Replier:
         reply, source = self.ask(build_chat_messages(sit)), None
         if reply.look and self.searcher is not None:
             reply, source = self.look_up(sit, reply)
+        # "[sticker #6]" written into her words is taken out here, whichever way the reply came:
+        # parse_reply does it for a JSON reply, but a reply that did not parse, or the plain-text
+        # second try, went out as it was and he got the square brackets as a bubble (11-10).
+        reply.say, named = split_sticker_placeholder(reply.say)
+        if reply.sticker is None:
+            reply.sticker = named
         reply.say = texting(reply.say)  # what he receives, and what the chat keeps
         return reply, source
 

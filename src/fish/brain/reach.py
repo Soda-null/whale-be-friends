@@ -26,7 +26,7 @@ from fish.brain.ask import ask_json
 from fish.brain.checker import check_home
 from fish.bus import Bus
 from fish.brain.llm import LLM
-from fish.brain.parse import clean_say, texting
+from fish.brain.parse import clean_say, split_sticker_placeholder, texting
 from fish.brain.prompt import WEEKDAYS
 from fish.config import Settings, owner_words
 from fish.cottage import WAKE_AT, RoomNode, asleep_hours
@@ -251,7 +251,8 @@ class Reacher:
                         room=room or "（没有）", temperature=1.0)
         if not data:
             return None
-        say = texting(clean_say(str(data.get("say") or "")))
+        # a first message carries no sticker: a placeholder written into it is only taken out
+        say = texting(split_sticker_placeholder(clean_say(str(data.get("say") or "")))[0])
         if not say:
             return None
         ok_asked = {f.id for f in trig.due}

@@ -208,3 +208,18 @@ def test_a_sticker_alone_is_an_answer_the_chat_keeps(tmp_path):
     out = brain.handle(Incoming("哈哈哈你好笨"), now=T)
     assert out.text == "" and out.sticker is not None
     assert [t.text for t in brain.window.recent()] == ["哈哈哈你好笨", "[表情包：打滚吐泡泡]"]
+
+
+def test_a_sticker_placeholder_never_goes_out_as_text_when_the_json_did_not_parse(tmp_path):
+    """11-10: her whole reply was the bubble "[sticker #6]". The model had not answered in JSON,
+    and only a JSON reply had the placeholder taken out."""
+    replies = iter(["", "", "[sticker #1]"])  # blank twice, then the plain-text try
+    conn, brain = make_brain(tmp_path, FakeLLM(lambda messages, json_mode: next(replies)))
+    kept = brain.album.add(b"\x89PNG\r\n\x1a\n" + b"0" * 32, "image/png", "比心", now=datetime(2026, 11, 2, 9, 0))
+    out = brain.handle(Incoming("早就上好了"), "wechat", datetime(2026, 11, 2, 10, 0))
+    assert out.text == "" and out.sticker is not None and out.sticker_caption == "比心" and kept.id == 1
+    assert brain.window.recent()[-1].text == "[表情包：比心]"
+    # words and a placeholder, not JSON: the words go out, the brackets do not
+    replies = iter(["哈哈\n[sticker #9]"])
+    out = brain.handle(Incoming("笑死"), "wechat", datetime(2026, 11, 2, 10, 5))
+    assert out.text == "哈哈" and out.sticker is None  # no sticker 9 in her album
