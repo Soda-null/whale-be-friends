@@ -24,8 +24,8 @@ from fish.cottage.garden import GardenMixin
 from fish.cottage.guest import GuestMixin
 from fish.cottage.him import HimMixin
 from fish.cottage.lake import LakeMixin
-from fish.cottage.rules import (ACTIONS, ATE_RECENTLY_HOURS, ENERGY_PER_HOUR, HUNGER_PER_HOUR, HUNGRY, SLEEP_FROM,
-                                WAKE_AT, asleep_hours, mealtime)
+from fish.cottage.hours import asleep_hours, bed_at, mealtime, wake_at, woke
+from fish.cottage.rules import ACTIONS, ATE_RECENTLY_HOURS, ENERGY_PER_HOUR, HUNGER_PER_HOUR, HUNGRY
 from fish.cottage.shop import ShopMixin
 from fish.cottage.tank import TankMixin
 from fish.cottage.state import (BED_WORDS, COUNT_WORDS, KEEP_EVENTS, KEEP_MEALS, Change, Offer, Room, _days_left,
@@ -38,20 +38,17 @@ __all__ = ["Change", "Cottage", "Offer", "Room", "invented_act"]
 
 
 def _wake_between(last: datetime, now: datetime) -> bool:
-    wake = datetime.combine(now.date(), WAKE_AT)
-    if wake > now:
-        wake -= timedelta(days=1)
-    return last < wake
+    return last < woke(now)
 
 
 def _awake_hours(last: datetime, now: datetime) -> float:
-    """Hours she was up between two moments, to the second: the night's sleep (SLEEP_FROM to
-    WAKE_AT) does not count. Counting in whole quarter hours made every poll (half a minute
+    """Hours she was up between two moments, to the second: the night's sleep (hours.py: that
+    day's bedtime to that day's getting up) does not count. Counting in whole quarter hours made every poll (half a minute
     apart) a quarter hour awake: 10-28 she was starving and spent an hour after a meal."""
     t, awake = max(last, now - timedelta(hours=48)), 0.0
     while t < now:
         end = min(now, datetime.combine(t.date() + timedelta(days=1), time(0)))
-        night = (datetime.combine(t.date(), SLEEP_FROM), datetime.combine(t.date(), WAKE_AT))
+        night = (bed_at(t.date()), wake_at(t.date()))
         asleep = max(0.0, (min(end, night[1]) - max(t, night[0])).total_seconds())
         awake += (end - t).total_seconds() - asleep
         t = end
@@ -132,8 +129,8 @@ class Cottage(ActionsMixin, ShopMixin, VisitorMixin, DrawerMixin, GuestMixin, Hi
             if room.doing == "睡觉":
                 room.doing = ""
             room.bed = "乱"  # up for the day; the bed stays as she left it until she makes it
-            woke = datetime.combine(now.date() if now.time() >= WAKE_AT else now.date() - timedelta(days=1), WAKE_AT)
-            change.slept.append((datetime.combine(woke.date(), SLEEP_FROM), woke))
+            up = woke(now)
+            change.slept.append((bed_at(up.date()), up))
 
         self._guest_step(room, now, change)  # he comes at the hour he said, goes at the hour he leaves
         self._garden_step(room, now, change)  # each morning her pots grow a day, or wilt (garden.py)

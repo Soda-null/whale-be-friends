@@ -9,7 +9,7 @@ import re
 from datetime import datetime, time
 
 from fish.config import owner_words
-from fish.cottage.rules import MEALS
+from fish.cottage.hours import meals
 from fish.cottage.state import Change, Room, _iso
 
 LATEST = time(23, 30)  # he stays until he says he goes, at the latest this (her bed is at midnight)
@@ -74,7 +74,7 @@ class GuestMixin:
         if not g or g.get("here"):
             return False
         since = datetime.fromisoformat(g["since"])
-        end = next((e for _, s, e in MEALS if s <= now.time() < e), None)
+        end = next((e for _, s, e in meals(now.date()) if s <= now.time() < e), None)
         return end is not None and since.date() == now.date() and since.time() < end
 
     @staticmethod

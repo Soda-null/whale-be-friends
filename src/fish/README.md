@@ -26,6 +26,8 @@
 | `brain/meaning.py` | 按意思找记忆（决定 58）：`Meaning` 是一种 `Embedder`，字面和意思取高的；`load` 读 `data/models/bge-small-zh/` 里的小模型（ONNX，不用 torch），`embedder` 没模型就退回按字面。接线在 `respond.py` 建 `Recollector` 那一行 | 能用，`tests/test_meaning.py` |
 | `memory/old.py` | `old_things`：他一周前的、没写结果的事里她还想得起来的（决定 58）；`urges/him.py` 的 `old` 拿它当先开口的由头 | 能用，`tests/test_old_things.py` |
 | `channels/crossed.py` | 撞车的消息（决定 58）：`Crossing` 记她上一条气泡几点发出去，他这条发得更早就在前面加一句说明；`wechat.py` 里两行接线 | 能用，`tests/test_crossed.py` |
+| `cottage/hours.py` | 她的钟点（决定 59）：`bed_at` / `wake_at` / `meals` 每天由日期抽签，`asleep_hours`、`mealtime`、`woke`、`rested` 都从这算；屋子、先开口、夜里算劲头都问它 | 能用，`tests/test_drawn_days.py` |
+| `brain/leisure/pace.py` | 一天有多少空闲（决定 59）：`moments_on` 段数、`gap_on` 间隔、`starts_on` 最早几点，每天抽签；`free.py` 的门问它 | 能用，`tests/test_drawn_days.py` |
 | `brain/prompts/` | `gist.md`（夜里把反复的事改写成大意，决定 20）；聊天：`chat.md`（人设 + 怎么回 + 输出格式 + 底牌 / 日记 / 现在 / 想起 / 惦记 / 摘要）、`fold.md`（折叠窗口）、`close_episode.md`（收尾聊天）；夜里：`merge.md`（合并重复）、`contradictions.md`（新事实取代旧的）、`reflect.md`（反思）、`diary.md`（日记和生活线）；用户能直接改 | 能用 |
 | `brain/consolidate.py` | 夜里的四次模型调用（合并、取代、反思、日记），回复坏了就当"今晚不做" | 能用 |
 | `brain/world.py` | 逛的两次模型调用：从今天的标题里挑最多 3 条、看完写见闻和新念头（`prompts/browse_pick.md`、`browse_read.md`）；`brain/ask.py` 是它们共用的"问一句拿 JSON" | 能用 |

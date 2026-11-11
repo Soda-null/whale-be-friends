@@ -8,9 +8,11 @@ from fish.memory import MemoryStore, old_things
 from fish.mood import Mood
 from fish.storage import connect
 from fish.urges import Scene, about_him
-from fish.urges.rules import OLD_AFTER_DAYS, OLD_EVERY_DAYS, OLD_IMPORTANCE
+from fish.urges.him import old_day
+from fish.urges.rules import OLD_AFTER_DAYS, OLD_CHANCE, OLD_IMPORTANCE
 
-DAY = next(datetime(2027, 3, d, 15, 0) for d in range(1, 9) if datetime(2027, 3, d).toordinal() % OLD_EVERY_DAYS == 0)
+DAYS = [datetime(2027, 3, 1, 15, 0) + timedelta(days=i) for i in range(300)]
+DAY = next(d for d in DAYS if old_day(d.toordinal()) and not old_day(d.toordinal() + 1))
 LONG_AGO = DAY - timedelta(days=20)
 
 
@@ -28,6 +30,9 @@ def test_an_old_thing_of_his_is_a_reason_once(tmp_path):
     assert u.ref.id == race.id and "半程马拉松" in u.line and "记下的" in u.line
     assert olds(conn, DAY + timedelta(hours=3))[0].ref.id == race.id  # the same thought all day
     assert olds(conn, DAY + timedelta(days=1)) == []  # not every day
+    such = [old_day(d.toordinal()) for d in DAYS]
+    assert abs(sum(such) / len(such) - OLD_CHANCE) < 0.1  # about one day in three
+    assert "".join("x" if x else "." for x in such[:60]).count("x..x..x..x") == 0  # and on no calendar
     policy = ReachPolicy(conn)
     assert policy.once_key(u) == f"old:{race.id}"
     policy.record_considered(DAY, once=[policy.once_key(u)])

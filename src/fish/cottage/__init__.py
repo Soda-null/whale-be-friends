@@ -4,6 +4,7 @@ the brain or the channels."""
 from fish.cottage.guest import leaving_words
 from fish.cottage.node import RoomNode
 from fish.cottage.room import Change, Cottage, Offer, Room, invented_act
-from fish.cottage.rules import WAKE_AT, asleep_hours, layout, rested, summary
+from fish.cottage.hours import asleep_hours, rested, wake_at, woke
+from fish.cottage.rules import layout, summary
 
-__all__ = ["Change", "Cottage", "Offer", "Room", "RoomNode", "leaving_words", "asleep_hours", "WAKE_AT", "invented_act", "layout", "rested", "summary"]
+__all__ = ["Change", "Cottage", "Offer", "Room", "RoomNode", "leaving_words", "asleep_hours", "invented_act", "layout", "rested", "summary", "wake_at", "woke"]

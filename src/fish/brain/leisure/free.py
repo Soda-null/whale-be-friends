@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Callable
 from fish.brain.ask import ask_json
 from fish.brain.leisure.base import Activity, Choice, Kit, Material
 from fish.brain.leisure.cottage import KEY as COTTAGE_KEY
+from fish.brain.leisure.pace import gap_on, moments_on, starts_on
 from fish.cottage import invented_act, layout
 from fish.brain.prompt import WEEKDAYS
 from fish.brain.world import Browser
@@ -29,9 +30,8 @@ from fish.world import Fetch, Searcher, load_sources, urllib_fetch
 if TYPE_CHECKING:
     from fish.brain.respond import Brain
 
-DAY_START, DAY_END = time(9, 0), time(23, 0)
+DAY_END = time(23, 0)  # when the first may come, how many and how far apart: pace.py, drawn each day
 AFTER_HIS_MESSAGE = timedelta(minutes=30)
-MIN_GAP = timedelta(hours=3)
 NOTHING = Choice("nothing", "什么都不干（发呆、打盹、数米粒）")
 NOTHING_AT_HOME = Choice("nothing", "什么都不干（发呆、躺一会儿、看看湖）")  # with her cottage (decision 26)
 SELF_NOTES_PER_DAY = 1  # decision 19: her life threads grow slowly
@@ -49,13 +49,13 @@ class LeisurePolicy:
     def refused(self, now: datetime) -> str | None:
         if not self.enabled:
             return "off"
-        if not DAY_START <= now.time() <= DAY_END:
+        if not starts_on(now.date()) <= now.time() <= DAY_END:
             return "night"
         today = datetime.combine(now.date(), time(0))
         moments = Pastimes(self.conn).moments(today)
-        if len(moments) >= self.max_per_day:
+        if len(moments) >= moments_on(now.date(), self.max_per_day):
             return "enough today"
-        if moments and now - datetime.fromisoformat(moments[-1].ts) < MIN_GAP:
+        if moments and now - datetime.fromisoformat(moments[-1].ts) < gap_on(now.date()):
             return "too soon"
         his = last_his_message(self.conn)
         if his is not None and now - his < AFTER_HIS_MESSAGE:

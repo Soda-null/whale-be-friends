@@ -8,7 +8,8 @@ from __future__ import annotations
 
 from datetime import date, datetime, timedelta
 
-from fish.cottage.rules import DIE_DAYS, FRIDGE_SLOTS, PLANTS, RIPE_AT_MOST, WAKE_AT, WILT_DAYS, Plant
+from fish.cottage.hours import wake_at
+from fish.cottage.rules import DIE_DAYS, FRIDGE_SLOTS, PLANTS, RIPE_AT_MOST, WILT_DAYS, Plant
 from fish.cottage.state import COUNT_WORDS, Change, Offer, Room, put_in
 
 KEYS = ("sow", "water", "pick")
@@ -98,8 +99,8 @@ class GardenMixin:
         if not room.grew:
             room.grew = (room.last or now.isoformat())[:10]
         day = date.fromisoformat(room.grew) + timedelta(days=1)
-        while day <= now.date() and datetime.combine(day, WAKE_AT) <= now:
-            at = datetime.combine(day, WAKE_AT)
+        while day <= now.date() and wake_at(day) <= now:
+            at = wake_at(day)
             for i, p in enumerate(room.pots):
                 if p:
                     self._grow(room, i, day, at, change)

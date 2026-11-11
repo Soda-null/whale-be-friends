@@ -10,7 +10,7 @@ import random
 from fish.config import owner_words
 from fish.memory import DUE_SHOWN, MemoryStore, ProspectiveStore, Relationship, last_his_message, old_things
 from fish.urges.rules import (ANNIVERSARIES, BORED_LEVEL, BORED_PER_QUIET_HOUR, BORED_SILENCE_HOURS, OLD_AFTER_DAYS,
-                              OLD_EVERY_DAYS, OLD_IMPORTANCE, SHARE_AT_MOST, SHARE_IMPORTANCE, SILENCE_HOURS)
+                              OLD_CHANCE, OLD_IMPORTANCE, SHARE_AT_MOST, SHARE_IMPORTANCE, SILENCE_HOURS)
 from fish.urges.urge import HIM, Scene, Urge
 
 
@@ -62,12 +62,17 @@ def home(s: Scene) -> list[Urge]:
     return [Urge(HIM, "home", f"家里的事：{line}", ref=line) for line in s.home]
 
 
+def old_day(day: int) -> bool:
+    """Whether an old thing may cross her mind on this day: the day draws it, once."""
+    return random.Random(f"old-day:{day}").random() < OLD_CHANCE
+
+
 def old(s: Scene) -> list[Urge]:
     """One thing of his from a while back, the same one all day (the day picks it, so being asked
     again an hour later is the same thought, not a new one). Only what she can still bring up
     herself, what was not a promise, and what has no ending written on it: "后来怎么样了"."""
     day = s.now.date().toordinal()
-    if day % OLD_EVERY_DAYS:
+    if not old_day(day):
         return []
     could = old_things(MemoryStore(s.conn), s.now, after_days=OLD_AFTER_DAYS, importance=OLD_IMPORTANCE)
     if not could:

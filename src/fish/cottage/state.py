@@ -32,7 +32,7 @@ def _iso(t: datetime) -> str:
 @dataclass
 class Room:
     doing: str = ""  # what she is busy with ("做饭", "睡觉"), "" when nothing in particular
-    until: str = ""  # when that ends; empty for sleep, which ends at WAKE_AT
+    until: str = ""  # when that ends; empty for sleep, which ends when she gets up (hours.py)
     bed: str = "叠好"  # 叠好 / 乱 / 在睡
     fridge: list[dict] = field(default_factory=list)  # {"name": "鸡蛋", "meals": 3, "bought": "2026-10-28"}
     rice: int = RICE_FULL // 2  # meals left in the rice jar

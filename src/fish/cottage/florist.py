@@ -7,8 +7,9 @@ from __future__ import annotations
 
 from datetime import date, datetime, timedelta
 
+from fish.cottage.hours import asleep_hours
 from fish.cottage.rules import (ACTIONS, FLORIST_AGAIN_HOURS, FLORIST_WALK_MINUTES, FLOWER_SPOTS, FLOWERS,
-                                Flower, asleep_hours, florist_open, flowers_in_stock)
+                                Flower, florist_open, flowers_in_stock)
 from fish.cottage.state import COUNT_WORDS, SPLIT, Change, Offer, Room
 
 KEYS = ("florist",)

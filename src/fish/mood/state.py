@@ -22,6 +22,7 @@ FOOD_WORDS = ("吃", "饭", "喂", "零食", "夜宵")
 # What each reported mood word says about her tone that turn, -1..1 (layer B reads these).
 WORD_TONE = {"开心": 1.0, "好奇": 0.5, "平静": 0.1, "无聊": -0.3, "困": -0.2, "饿": -0.2,
              "烦": -0.7, "难过": -1.0}
+LIVELY_TURN_ENERGY = 0.5  # a turn she called 开心 or 好奇; twenty of them undo two tired hours
 # Closeness stages (decision 11); the names match the headings in docs/persona_zh.md.
 STAGES = ((60.0, "很熟"), (25.0, "熟了"), (0.0, "刚认识"))
 
@@ -44,19 +45,42 @@ class Mood:
     hunger: float
 
     def describe(self, stage: str | None = None) -> str:
-        """One plain Chinese sentence for the prompt; numbers never reach the model."""
-        parts = []
-        if self.energy < 30:
-            parts.append("很困，不太想打字")
-        elif self.energy > 75:
-            parts.append("挺精神")
-        if self.hunger > 70:
-            parts.append("饿了，满脑子白饭")
-        if self.boredom > 60:
-            parts.append("有点无聊，想换个话题")
+        """One plain Chinese sentence for the prompt; numbers never reach the model. Each number
+        has several steps, and a step several ways of saying it (decision 59): she was told the
+        same "很困，不太想打字" at 29 and at 0, word for word, on 43% of two weeks' turns."""
+        parts = [said for said in (_step(ENERGY_STEPS, self.energy), _step(HUNGER_STEPS, self.hunger),
+                                   _step(BOREDOM_STEPS, self.boredom)) if said]
         if stage:
             parts.append(owner_words({"刚认识": "和他刚认识", "熟了": "和他熟了", "很熟": "和他很熟了"}[stage]))
         return "，".join(parts) if parts else "状态一般"
+
+
+# (from, up to, ways of saying it): the number picks the step, and within the step which wording,
+# so the words change as the number moves and stay put while it does not. Between the steps
+# nothing is said. Only "困得不行" says she would rather not type: that used to start at 30,
+# which with her cottage's hourly tiring was every evening from six.
+ENERGY_STEPS = (
+    (0, 15, ("困得眼睛快睁不开了，不太想打字", "困得不行，话都懒得说", "快睡着了，回得慢")),
+    (15, 30, ("困了，话比平时少", "有点犯困", "打哈欠了")),
+    (30, 42, ("有点乏", "有点懒懒的", "不太有劲")),
+    (75, 101, ("挺精神", "精神头不错", "劲头挺足")),
+)
+HUNGER_STEPS = (
+    (55, 70, ("有点饿了", "肚子有点空")),
+    (70, 85, ("饿了，满脑子白饭", "饿了，想吃东西")),
+    (85, 101, ("饿得不行，满脑子都是吃的", "饿得发慌")),
+)
+BOREDOM_STEPS = (
+    (60, 80, ("有点无聊，想换个话题", "有点闷，想聊点别的")),
+    (80, 101, ("无聊透了，想找点新鲜的", "闷得慌，想干点别的")),
+)
+
+
+def _step(steps: tuple, value: float) -> str:
+    for lo, hi, ways in steps:
+        if lo <= value < hi:
+            return ways[int(value) % len(ways)]
+    return ""
 
 
 class MoodStore:
@@ -110,6 +134,9 @@ class MoodStore:
             mood.boredom = _clamp(mood.boredom + 10)
         elif reported in ("开心", "好奇"):
             mood.boredom = _clamp(mood.boredom - 8)
+            # a chat she enjoys keeps her up a little (decision 59): the one thing talking still
+            # does to her energy with a kitchen, where every awake hour tires her
+            mood.energy = _clamp(mood.energy + LIVELY_TURN_ENERGY)
         if not kitchen and any(k in user_text for k in FOOD_WORDS):
             mood.hunger = _clamp(mood.hunger - 20)
         return mood

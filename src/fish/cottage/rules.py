@@ -21,6 +21,10 @@ HUNGER_PER_HOUR = 3.0  # awake hours make her hungry; eating is what undoes it
 ENERGY_PER_HOUR = 2.5  # awake hours tire her; a nap or the night's sleep is what undoes it
 SLEEP_FROM, WAKE_AT = time(0, 0), time(8, 0)
 MEALS = (("午饭", time(11, 30), time(13, 30)), ("晚饭", time(17, 30), time(19, 30)))
+# Around those hours each day draws its own (decision 59, hours.py): to bed up to this much after
+# SLEEP_FROM, up this much before or after WAKE_AT and later still on a weekend, each meal up to
+# this much into its window. Minutes.
+BED_LATER_MINUTES, WAKE_SHIFT_MINUTES, LIE_IN_MINUTES, MEAL_LATER_MINUTES = (0, 45), (-20, 40), 30, (0, 40)
 ATE_RECENTLY_HOURS = 2.5  # a meal she cooked herself this close to mealtime counts as that meal
 
 
@@ -156,21 +160,10 @@ def in_stock(now: datetime) -> list[str]:
     return [RICE] + goods
 
 
-def mealtime(now: datetime) -> str | None:
-    return next((name for name, start, end in MEALS if start <= now.time() < end), None)
-
-
 def asleep_hours(t: datetime) -> bool:
+    """The goldfish's night, the same every day. Her own hours are in hours.py."""
     return SLEEP_FROM <= t.time() < WAKE_AT
 
-
-def rested(energy: float, at: datetime) -> float:
-    """Her energy at `at` with the ordinary tiredness of the hours since she woke put back: what
-    is left says how the day went (a nap, a long walk), not what time it is. The night reads her
-    day with this (decision 58): the plain average of a day is always below the morning's, and
-    fed back night after night it sank her drive to 0.38 and stayed there."""
-    woke = datetime.combine(at.date(), WAKE_AT)
-    return min(100.0, energy + ENERGY_PER_HOUR * max(0.0, (at - woke).total_seconds() / 3600))
 
 
 SUMMARY_MARK = "**一句话给她：**"

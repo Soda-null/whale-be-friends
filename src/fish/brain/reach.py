@@ -29,7 +29,7 @@ from fish.brain.llm import LLM
 from fish.brain.parse import clean_say, split_sticker_placeholder, texting
 from fish.brain.prompt import WEEKDAYS
 from fish.config import Settings, owner_words
-from fish.cottage import WAKE_AT, RoomNode, asleep_hours
+from fish.cottage import RoomNode, asleep_hours, wake_at
 from fish.memory import Followup, Memory, Relationship, Window, iso, last_his_message, today_turns
 from fish.mood import Mood, MoodStore
 from fish.msgs import SheSaid, TimePassed
@@ -190,7 +190,7 @@ class ReachPolicy:
         if now - his > timedelta(hours=WINDOW_HOURS):
             return "out of reach"
         nxt = self.next_think()
-        woke = datetime.combine(now.date(), WAKE_AT)
+        woke = wake_at(now.date())
         if nxt is None or nxt < woke:
             # The first thought of the day comes a while after she wakes. Left over from last
             # night it was long past, and with something due she texted at 08:00:07 every morning.
