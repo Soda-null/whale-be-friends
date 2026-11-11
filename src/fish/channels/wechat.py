@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Callable
 
 from fish.channels.base import Incoming, Reply
+from fish.channels.crossed import Crossing
 from fish.channels.emoji import readable
 from fish.messages import SharedFile
 from fish.channels.ilink import (LOGIN_BASE, MSG_USER, TYPING, TYPING_CANCEL, ILinkClient,
@@ -198,6 +199,7 @@ class WeChatChannel:
         self.max_polls = max_polls  # tests stop the loop; None runs until Ctrl-C
         self.tick = tick  # between polls: her chance to speak first
         self._typing_tickets: dict[str, str] = {}
+        self.crossing = Crossing()  # when her last bubble went out (decision 58)
 
     def run(self, reply: Reply) -> None:
         self.out("（大肥鱼在微信上等着。Ctrl-C 退出。）")
@@ -272,6 +274,7 @@ class WeChatChannel:
             if i:
                 self.sleep(bubble_pause(bubble))
             mid = self.client.send_text(user, bubble, token)
+            self.crossing.she_sent()
             self._spend(token)
             self.out(f"→ {bubble[:30]}（message_id {mid or '无'}，凭证还剩 {self._left(token)}）")
 
@@ -345,6 +348,9 @@ class WeChatChannel:
             text = backlog_note(stale) + join_fragments(old_texts) + ("\n（现在）" + text if text else "")
         if not text and image is None and shared is None:
             return False
+        if text and (crossed := self.crossing.note([sent_at(m) for m in accepted if m not in stale])):
+            self.out(f"（撞车了：{text[:30]}）")
+            text = crossed + text
         sender = self.state.user_id
         token = self.state.context_tokens.get(sender)
         self._typing(sender, token, TYPING)

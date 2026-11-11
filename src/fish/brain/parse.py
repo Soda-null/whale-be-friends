@@ -36,7 +36,7 @@ _OWN_LABEL = re.compile(r"^\s*(?:say|assistant|你)\s*[:：]\s*", re.I)
 _ECHO = re.compile(r"^\s*[（(][^）)]*(?:输出格式|json\s*对象|不用\s*json)[^）)]*[）)]?\s*$", re.I)
 # The notes put at his line since (brain/closing.py, brain/gap.py, brain/comfort.py), said back the same way; they
 # hold brackets of their own, so they are known by how they begin.
-_NOTE_BACK = re.compile(r"^\s*[（(](?:他只是应了一声|他在道别|离上面最后一句话|他这会儿不好受)")
+_NOTE_BACK = re.compile(r"^\s*[（(](?:他只是应了一声|他在道别|离上面最后一句话|他这会儿不好受|这句是他在你上一条)")
 
 
 MAX_BUBBLES = 5  # messages one reply may come in; more are joined into the last
