@@ -11,6 +11,10 @@ BORED_PER_QUIET_HOUR = 8
 SHARE_IMPORTANCE = 3
 SHARE_AT_MOST = 3
 ANNIVERSARIES = (7, 30, 100, 365, 730)  # and every hundred days
+# Something from a while back crosses her mind (decision 58): a thing of his that happened, that
+# has no ending written on it yet, written and last thought of at least OLD_AFTER_DAYS ago. One a
+# day at most, and only on one day in OLD_EVERY_DAYS: a friend does this now and then, not daily.
+OLD_AFTER_DAYS, OLD_IMPORTANCE, OLD_EVERY_DAYS = 7, 4, 3
 
 # things to do (decision 46): how far each is, and how strong an urge must be to come up
 TIERS = {"lake": 1, "shop": 2, "florist": 2}  # 0 at hand (texting him), 1 out of the door, 2 a walk away

@@ -26,6 +26,7 @@ from fish.memory.daychat import fit as fit_day_chat
 from fish.memory.diary import Diary
 from fish.memory.episodes import Episode, EpisodeManager
 from fish.memory.longterm import ABOUT_HIM_KINDS, KINDS, PACT_LINK, Memory, MemoryStore, echoes_her, iso, overlap
+from fish.memory.old import old_things
 from fish.memory.pastimes import Moment, Pastime, Pastimes
 from fish.memory.phase import Phase, PhaseStore
 from fish.memory.pacts import asks_pact, his_line, promised_in_words, triggered
@@ -48,6 +49,6 @@ __all__ = [
     "last_his_message", "Embedder", "Episode", "EpisodeManager",
     "Followup", "Growth", "Memory", "MemoryStore", "Moment", "Page", "Pastime", "Pastimes", "Phase", "PhaseStore", "ProspectiveStore",
     "Recalled", "Relationship", "Sticker", "StickerAlbum", "TimeCued", "TraitStore", "Turn", "Window",
-    "arrival_line", "asks_habit", "asks_pact", "asks_recall", "echoes_her", "his_line", "iso", "count_patterns", "cue_for", "keys_of", "may_answer", "mentioned", "overlap", "promised_in_words", "recall", "redact", "secret", "spoken", "today_section", "told_day",
+    "arrival_line", "asks_habit", "asks_pact", "asks_recall", "echoes_her", "his_line", "iso", "count_patterns", "cue_for", "keys_of", "may_answer", "mentioned", "old_things", "overlap", "promised_in_words", "recall", "redact", "secret", "spoken", "today_section", "told_day",
     "triggered", "turn_back",
 ]

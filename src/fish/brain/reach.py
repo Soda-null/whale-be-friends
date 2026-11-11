@@ -143,6 +143,8 @@ class ReachPolicy:
             return f"seen:{u.ref.id}"
         if u.source == "bored":
             return f"bored:{self.last_his_message()}"  # once in each stretch of his silence
+        if u.source == "old":
+            return f"old:{u.ref.id}"  # decision 58: an old thing crosses her mind once
         return None
 
     def postpone(self, now: datetime) -> None:
