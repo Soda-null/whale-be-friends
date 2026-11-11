@@ -11,6 +11,7 @@ from __future__ import annotations
 import sqlite3
 from dataclasses import asdict, dataclass, replace
 from datetime import datetime
+from typing import Callable
 
 from fish.config import owner_words
 from fish.memory import iso
@@ -121,16 +122,19 @@ class MoodStore:
         )
         self.conn.commit()
 
-    def day_tone(self, start: datetime, end: datetime) -> tuple[float | None, float | None]:
-        """(mean tone of the words she reported, mean energy) between start and end, or Nones."""
+    def day_tone(self, start: datetime, end: datetime, *,
+                 rested: Callable[[float, datetime], float] | None = None) -> tuple[float | None, float | None]:
+        """(mean tone of the words she reported, mean energy) between start and end, or Nones.
+        rested: what to read each turn's energy as (her cottage takes the hour of day out of it)."""
         rows = self.conn.execute(
-            "SELECT word, energy FROM mood_log WHERE ts >= ? AND ts < ?", (iso(start), iso(end))
+            "SELECT ts, word, energy FROM mood_log WHERE ts >= ? AND ts < ?", (iso(start), iso(end))
         ).fetchall()
         if not rows:
             return None, None
         tones = [WORD_TONE[r["word"]] for r in rows if r["word"] in WORD_TONE]
         tone = sum(tones) / len(tones) if tones else None
-        return tone, sum(r["energy"] for r in rows) / len(rows)
+        energies = [rested(r["energy"], datetime.fromisoformat(r["ts"])) if rested else r["energy"] for r in rows]
+        return tone, sum(energies) / len(energies)
 
     def rest(self, tone: float = 0.0, drive: float = 0.6) -> Mood:
         """Nightly: sleep. Where she wakes up depends on the phase (layer B): a keen stretch

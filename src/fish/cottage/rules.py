@@ -164,6 +164,15 @@ def asleep_hours(t: datetime) -> bool:
     return SLEEP_FROM <= t.time() < WAKE_AT
 
 
+def rested(energy: float, at: datetime) -> float:
+    """Her energy at `at` with the ordinary tiredness of the hours since she woke put back: what
+    is left says how the day went (a nap, a long walk), not what time it is. The night reads her
+    day with this (decision 58): the plain average of a day is always below the morning's, and
+    fed back night after night it sank her drive to 0.38 and stayed there."""
+    woke = datetime.combine(at.date(), WAKE_AT)
+    return min(100.0, energy + ENERGY_PER_HOUR * max(0.0, (at - woke).total_seconds() / 3600))
+
+
 SUMMARY_MARK = "**一句话给她：**"
 
 

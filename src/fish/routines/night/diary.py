@@ -9,7 +9,7 @@ import re
 from datetime import date, datetime, timedelta
 
 from fish.brain import away, moment_line
-from fish.cottage import invented_act
+from fish.cottage import invented_act, rested
 from fish.memory import Diary, Pastimes, TraitStore, first_message_at
 from fish.routines.night.context import Night, day_bounds, fish_day
 from fish.routines.night.missed import EPISODES_LOOKED_AT, chat_days
@@ -131,7 +131,9 @@ def _write_letter_of(night: Night, day: date, mood: str, gists: list[str], diary
 
 
 def step_phase(night: Night) -> None:
-    tone_today, energy_today = night.moods.day_tone(night.day_start, night.day_end)
+    # with her cottage the hours awake tire her: the day's drive is read without them (decision 58)
+    home = night.brain is not None and night.brain.cottage is not None
+    tone_today, energy_today = night.moods.day_tone(night.day_start, night.day_end, rested=rested if home else None)
     focus = [re.sub(r"^[\d\-年月日，, ]+", "", m.text).split("，")[0][:16]
              for m in night.store.alive("self")][-3:]  # short handles, not whole notes
     night.phase = night.phases.update(night.day.isoformat(), tone_today=tone_today,

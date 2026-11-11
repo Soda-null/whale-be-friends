@@ -58,6 +58,7 @@ MAC_TZ="$(readlink /etc/localtime | sed 's#.*/zoneinfo/##')"
 ssh "$BOX" "cd ~/$REMOTE_DIR \
   && { [ -x .venv/bin/python ] || python3 -m venv .venv; } \
   && .venv/bin/python -m pip install -q -r requirements.txt -e . \
+  && { .venv/bin/python scripts/get_meaning_model.py || true; } \
   && for u in dafeiyu-browse.timer dafeiyu-browse.service; do \
        systemctl --user disable --now \$u 2>/dev/null; rm -rf ~/.config/systemd/user/\$u ~/.config/systemd/user/\$u.d; done \
   && for u in dafeiyu-wechat.service dafeiyu-nightly.service dafeiyu-nightly.timer; do \

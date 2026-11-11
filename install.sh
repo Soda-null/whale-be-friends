@@ -80,6 +80,8 @@ install_deps() {
     say "装依赖（第一次要一两分钟）"
     "$PY" -m pip install -q --upgrade pip
     "$PY" -m pip install -q -r "$DIR/requirements.txt" -e "$DIR"
+    # the small model she finds memories by meaning with (decision 58); without it she finds by words
+    "$PY" "$DIR/scripts/get_meaning_model.py" || true
 }
 
 detect_tz() {
