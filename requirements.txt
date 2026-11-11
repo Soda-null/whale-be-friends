@@ -15,3 +15,8 @@ pytest==9.1.1
 pillow==13.0.0
 # Reads the text of PDFs he shares (decision 23)
 pypdf==6.21.3
+# Finding memories by meaning (decision 58): runs the small sentence model that
+# scripts/get_meaning_model.py downloads. Optional: without them she finds by words only.
+onnxruntime==1.31.1
+tokenizers==0.23.3
+numpy==2.5.4

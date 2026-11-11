@@ -21,6 +21,7 @@ from fish.app import wire
 from fish.brain.checker import check_home
 from fish.brain.leisure import Leisure, LeisureNode, away, default_activities, moment_line, pastimes_line
 from fish.brain.llm import LLM
+from fish.brain.meaning import embedder
 from fish.brain.parse import Reply, parse_episode_close
 from fish.brain.prompt import Situation, build_close_messages, build_fold_messages, render_day
 from fish.brain.reach import HOME_LATELY, ReachNode, ReachOut
@@ -91,7 +92,8 @@ class Brain:
         self.home_fixes: list[dict] = []  # her lines the checker mended (decision 38); the checkup reads them
         self.recollector = Recollector(conn, store=self.store, prospective=self.prospective,
                                        episodes=self.episodes, window=self.window, diary=self.diary,
-                                       phases=self.phases, relationship=self.relationship)
+                                       phases=self.phases, relationship=self.relationship,
+                                       embedder=embedder(settings.meaning_dir))
         # the nodes that live on time (docs/nodes_design_zh.md step 3), wired in app.py
         self.bus = Bus()
         self.clock = Clock(self.bus)

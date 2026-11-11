@@ -35,6 +35,7 @@ class Settings:
     pages: bool = True
     spend: str = "normal"  # spending tier, low / normal / high (decision 47)
     box: str = ""  # BOX= in .env: she lives on that machine and this one only looks in (decision 52)
+    meaning_dir: Path | None = None  # the small sentence model's files (decision 58); None: find by words only
     cottage: bool = False  # her lakeside cottage (decision 26); on in .env-less runs since the persona says so (28)
 
 
@@ -90,4 +91,6 @@ def load_settings(env_file: Path | None = None) -> Settings:
         pages=os.environ.get("FISH_PAGES", "1") not in ("0", "false", "no", ""),
         cottage=os.environ.get("FISH_COTTAGE", "1") not in ("0", "false", "no", ""),
         box=os.environ.get("BOX", "").strip(),
+        meaning_dir=(db_path.parent / "models" / "bge-small-zh"
+                     if os.environ.get("FISH_MEANING", "1") not in ("0", "false", "no", "") else None),
     )

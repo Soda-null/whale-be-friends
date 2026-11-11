@@ -417,7 +417,8 @@ def main(argv: list[str] | None = None) -> None:
         raise SystemExit("需要 .env 里的 DEEPSEEK_API_KEY")
     workdir = Path(tempfile.mkdtemp(prefix="checkup-"))
     settings = Settings(api_key=base.api_key, base_url=base.base_url, model=base.model,
-                        db_path=workdir / "fish.db", reach_out=False, cottage=not args.no_cottage)
+                        db_path=workdir / "fish.db", reach_out=False, cottage=not args.no_cottage,
+                        meaning_dir=base.meaning_dir)
     llm = DeepSeekLLM(settings)
     cu = Checkup(script, llm, llm, workdir, settings=settings)
     print(f"临时目录 {workdir}；跑 {days} 天" + (f"，最后拨到第 {final_day} 天" if final_day else ""))

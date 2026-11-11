@@ -23,7 +23,7 @@ from fish.memory.patterns import arrival_line, asks_habit
 from fish.memory.phase import Phase, PhaseStore
 from fish.memory.prospective import DUE_SHOWN, Followup, ProspectiveStore
 from fish.memory.relationship import Relationship
-from fish.memory.retrieval import TOUCH_RELEVANCE, BigramEmbedder, Recalled, cue_for, mentioned, recall
+from fish.memory.retrieval import TOUCH_RELEVANCE, BigramEmbedder, Embedder, Recalled, cue_for, mentioned, recall
 from fish.memory.today import section as today_section
 from fish.memory.when import TimeCued
 from fish.memory.window import Window
@@ -56,8 +56,9 @@ class Recollector:
 
     def __init__(self, conn: sqlite3.Connection, *, store: MemoryStore, prospective: ProspectiveStore,
                  episodes: EpisodeManager, window: Window, diary: Diary, phases: PhaseStore,
-                 relationship: Relationship) -> None:
+                 relationship: Relationship, embedder: Embedder | None = None) -> None:
         self.conn = conn
+        self.embedder = embedder or BigramEmbedder()  # how a line finds a memory; the brain may hand in a better one
         self.store = store
         self.prospective = prospective
         self.episodes = episodes
@@ -88,7 +89,7 @@ class Recollector:
         pacts = self.store.pacts(settled=asks_pact(said) or asks_recall(said))
         stars = triggered(said, [p for p in pacts if p.pact_state == "open"])
         cue = cue_for(said, last_fish)
-        recalled = recall(self.store, cue, now, embedder=TimeCued(BigramEmbedder(), now),
+        recalled = recall(self.store, cue, now, embedder=TimeCued(self.embedder, now),
                           skip={m.id for m in profile + pacts})
         found_pages = turn_back(self.episodes.closed(), said, now, cue=cue, skip={ep.id}) if pages else []
         today = self.today_lines(now, profile, said, him)
