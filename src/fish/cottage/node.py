@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 from fish.bus import Bus
 from fish.cottage.room import Cottage
 from fish.cottage.rules import ACTIONS
-from fish.msgs import HisStatus, HomeEvent, MoodMoved, SheAte, SheSlept, TimePassed
+from fish.msgs import HisStatus, HomeEvent, MoodMoved, SheAte, SheSlept, TimePassed, WeatherLooked
 
 
 def _at(now: datetime, hhmm: str) -> datetime | None:
@@ -35,6 +35,13 @@ class RoomNode:
 
     def on_time(self, m: TimePassed) -> None:
         self.step(m.now)
+
+    def on_weather(self, m: WeatherLooked) -> None:
+        """How warm it is outdoors (decision 60); a file he broke by hand leaves it be."""
+        try:
+            self.cottage.outdoors(m.outdoor_c, m.at)
+        except ValueError:
+            pass
 
     def step(self, now: datetime) -> None:
         """Bring the room up to now and say what it did. A file he broke by hand leaves it be."""

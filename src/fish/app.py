@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import Any, Callable
 
 from fish.bus import Bus
-from fish.msgs import Chatted, MoodMoved, SheSaid, TimePassed
+from fish.msgs import Chatted, MoodMoved, SheSaid, TimePassed, WeatherLooked
 
 
 def wire(bus: Bus, *, room: Any | None, mood: Any, reach: Any, leisure: Any,
@@ -23,6 +23,7 @@ def wire(bus: Bus, *, room: Any | None, mood: Any, reach: Any, leisure: Any,
     # may think of him and text him; then, unless she just did, she may have a free moment
     if room is not None:  # no cottage (FISH_COTTAGE=0): nothing moves with time but her
         bus.subscribe(TimePassed, room.on_time)
+        bus.subscribe(WeatherLooked, room.on_weather)  # outdoors sets where her room's warmth drifts (decision 60)
     bus.subscribe(TimePassed, reach.on_time)
     bus.subscribe(TimePassed, leisure.on_time)
     # a line she said first: the chat keeps it; her free time knows she was busy texting

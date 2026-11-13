@@ -4,7 +4,7 @@ The room is reality; her head is memory. It changes three ways: him (visitor.py)
 what she does (actions.py, shop.py), and time (`advance`: she sleeps, eats at mealtimes, food
 goes off, what she started finishes). Her drawer is drawer.py; what everything is made of is
 state.py; her windowsill pots are garden.py, her goldfish tank.py, the pier lake.py, the flower shop and her
-flowers florist.py. The file is data/cottage/now.json, plain enough for him to read and edit. No model calls.
+flowers florist.py, how warm it is and the heater heater.py. The file is data/cottage/now.json, plain enough for him to read and edit. No model calls.
 """
 
 from __future__ import annotations
@@ -22,6 +22,7 @@ from fish.cottage.drawer import DrawerMixin
 from fish.cottage.florist import FloristMixin
 from fish.cottage.garden import GardenMixin
 from fish.cottage.guest import GuestMixin
+from fish.cottage.heater import HeaterMixin
 from fish.cottage.him import HimMixin
 from fish.cottage.lake import LakeMixin
 from fish.cottage.hours import asleep_hours, bed_at, mealtime, wake_at, woke
@@ -56,7 +57,7 @@ def _awake_hours(last: datetime, now: datetime) -> float:
 
 
 class Cottage(ActionsMixin, ShopMixin, VisitorMixin, DrawerMixin, GuestMixin, HimMixin, GardenMixin, TankMixin,
-              LakeMixin, FloristMixin):
+              LakeMixin, FloristMixin, HeaterMixin):
     put_in = staticmethod(put_in)  # into the fridge (state.py), kept here for old callers
 
     def __init__(self, path: Path) -> None:
@@ -106,6 +107,7 @@ class Cottage(ActionsMixin, ShopMixin, VisitorMixin, DrawerMixin, GuestMixin, Hi
         self._shop_on_the_way(room, now)  # done choosing: the bag is packed
         change.hunger += HUNGER_PER_HOUR * awake
         change.energy -= ENERGY_PER_HOUR * awake
+        self._heat_step(room, last, now)  # the room warms or cools toward where it settles (heater.py)
 
         if room.until and datetime.fromisoformat(room.until) <= now:
             done = datetime.fromisoformat(room.until)
@@ -125,6 +127,7 @@ class Cottage(ActionsMixin, ShopMixin, VisitorMixin, DrawerMixin, GuestMixin, Hi
         if asleep_hours(now):
             if not room.doing:
                 room.doing, room.bed = "睡觉", "在睡"
+                self._heater_off(room, now, change, "睡前把取暖器关了")
         elif room.doing == "睡觉" or _wake_between(last, now):
             if room.doing == "睡觉":
                 room.doing = ""
@@ -176,6 +179,7 @@ class Cottage(ActionsMixin, ShopMixin, VisitorMixin, DrawerMixin, GuestMixin, Hi
             "bed": BED_WORDS.get(room.bed, room.bed),
             "sill": "窗台上：" + "、".join(room.sill) if room.sill else "窗台上除了你的花没别的" if room.flowers else "窗台空着",
             "pots": GardenMixin.pots_line(room),
+            "warmth": HeaterMixin.warmth_line(room),
         }
         if room.guest:  # him, here or coming (decision 41)
             out["guest"] = GuestMixin.guest_line(room)
@@ -221,6 +225,8 @@ class Cottage(ActionsMixin, ShopMixin, VisitorMixin, DrawerMixin, GuestMixin, Hi
             wanted.append("tank")
         if self.flowers_matter(room, now):
             wanted.append("flowers")
+        if self.warmth_matters(room):
+            wanted.append("warmth")
         if room.sill:
             wanted.append("sill")
         wanted.append("food")

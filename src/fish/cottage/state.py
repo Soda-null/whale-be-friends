@@ -48,6 +48,9 @@ class Room:
     tank: dict = field(default_factory=dict)  # her goldfish: {"name", "since", "from", "fed", "water"} (decision 43)
     flowers: list[dict] = field(default_factory=list)  # from the flower shop, on the sill: {"name", "bought", "watered"} (decision 45)
     been: dict = field(default_factory=dict)  # when she was last back from each place ({"lake": ts}), and "since" it was kept (decision 46)
+    temp: float = 18.0  # how warm the room is, degrees (decision 60, heater.py)
+    heater: str = ""  # when she turned the heater on; "" while it is off
+    outside: dict = field(default_factory=dict)  # the last look at the weather: {"c", "at"}
     events: list[dict] = field(default_factory=list)  # {"ts", "line"}, the last two days
     last: str = ""  # up to when time has moved the room
 

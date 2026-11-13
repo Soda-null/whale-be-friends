@@ -65,6 +65,13 @@ class HomeEvent:
 
 
 @dataclass(frozen=True)
+class WeatherLooked:
+    """The weather was looked at (hourly): how warm it is outdoors, degrees (decision 60)."""
+    at: datetime
+    outdoor_c: float
+
+
+@dataclass(frozen=True)
 class Chatted:
     """One chat turn is over: what he said, what she answered, the mood she reported, what it
     was about and what the turn before was about (a topic going round and round bores her)."""

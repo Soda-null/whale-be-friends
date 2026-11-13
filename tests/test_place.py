@@ -228,3 +228,12 @@ def test_on_windows_she_keeps_the_machine_clock(tmp_path, monkeypatch):
     (tmp_path / ".env").write_text("", encoding="utf-8")
     load_settings(tmp_path / ".env")
     assert "TZ" not in os.environ
+
+
+def test_the_weather_tells_her_room_how_warm_it_is_outdoors(tmp_path: Path):
+    conn = connect(tmp_path / "fish.db")
+    brain = Brain(conn, Settings(api_key="t", base_url="", model="fake", db_path=tmp_path / "fish.db", cottage=True),
+                  FakeLLM([json.dumps({"notes": []})]), persona_text="你是大肥鱼。", stickers_dir=tmp_path / "stickers")
+    run_outside(conn, T, brain=brain, fetch=lambda u, t: meteo(now=(3, 0.0), hours=[]) if "open-meteo" in u
+                else fake_fetch(u, t), fetch_bytes=fake_tile, post=fake_post)
+    assert brain.cottage.load(T).outside == {"c": 9.4, "at": "2026-10-27T09:00"}  # decision 60

@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from fish.memory import MemoryStore, Relationship
+from fish.msgs import WeatherLooked
 from fish.routines.nightly import fish_day
 from fish.routines.runs import claim_run
 from fish.world import (Fetch, FetchBytes, FetchPost, Home, Place, load_home, load_places, locate, nearby,
@@ -70,7 +71,9 @@ def run_outside(conn: sqlite3.Connection, now: datetime | None = None, *, brain:
     looked_at = datetime.fromisoformat(looked) if looked else None
     if looked_at is None or now - looked_at >= WEATHER_EVERY:
         try:
-            rel.set("weather_line", weather(home, fetch).line(), now)
+            sky = weather(home, fetch)
+            rel.set("weather_line", sky.line(), now)
+            brain.bus.publish(WeatherLooked(now, sky.now_c))  # her room's warmth follows it (decision 60)
             rel.set("weather_at", now.isoformat(timespec="seconds"), now)
             report["weather"] = rel.get("weather_line")
         except Exception as e:  # noqa: BLE001 - a failed look is tried again at the next upkeep

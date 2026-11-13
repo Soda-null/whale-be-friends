@@ -53,6 +53,8 @@ ACTIONS = {a.key: a for a in (
     Action("namefish", "给小金鱼起名字", 1),
     Action("lake", "湖边码头坐着", 30),  # out of the door and she is there (decision 45, lake.py)
     Action("florist", "去花店", 40, energy=-10),  # fifteen minutes each way, ten inside (florist.py)
+    Action("heat_on", "开取暖器", 1),  # the little heater by her bed (decision 60, heater.py)
+    Action("heat_off", "关取暖器", 1),
 )}
 NOTE_PREFIX = "纸条"  # "纸条：早点睡" is a note she writes; anything else she leaves must be in the fridge
 
@@ -108,6 +110,17 @@ SHOP_AGAIN_HOURS = 2  # just back from the shop, she does not go again (10-29 tr
 GREENS_GONE_AFTER = time(15, 0)
 EVERY_DAY = ("鸡蛋", "青菜", "豆腐", "肉", "西红柿", "土豆")
 IN_SEASON = {9: "南瓜", 10: "南瓜", 11: "南瓜", 12: "萝卜", 1: "萝卜", 2: "萝卜"}
+
+# How warm her room is (decision 60, heater.py). Outdoors is the real weather's temperature;
+# with no look at it for OUTDOOR_TRUSTED_HOURS, the month's usual stands in.
+OUTDOOR_TRUSTED_HOURS = 3
+MONTH_C = {1: 3, 2: 5, 3: 10, 4: 16, 5: 21, 6: 25, 7: 28, 8: 27, 9: 23, 10: 17, 11: 10, 12: 5}
+KEEPS_TOWARD, KEEPS_SHARE = 24.0, 0.25  # heater off: the room settles a quarter of the way from outdoors to 24
+HEATER_ADDS, HEATER_UP_TO = 12.0, 24.0  # heater on: that much warmer than off, but not past its thermostat
+WARMS_HOURS, COOLS_HOURS = 1.0, 3.0  # how fast the room goes toward where it settles, heater on / off
+CHILLY = 19  # below this, turning the heater on is on her menu
+COLD = 16  # below this, the room's warmth is worth a line in a chat turn
+FEEL = ((10, "冷得很"), (16, "挺冷的"), (19, "有点凉"), (26, "不冷不热"), (29, "有点热"))  # (below, word); hotter: 热得很
 
 LAKE_UNTIL = time(20, 0)  # after dark she stays in (decision 45)
 LAKE_AGAIN_HOURS = 2
