@@ -6,7 +6,7 @@ only once somebody brings it back and the other picks it up. So:
 
 - the close of a chat may name a saying the chat made (`offer`): a candidate, kept only when the
   words are in the chat word for word, he took part (said them or laughed), they hold no secret,
-  they are not everyday words of his, and they are not a joke she already has;
+  they are not everyday words of his, not his nickname for her, and not a joke she already has;
 - he says a candidate again on another day: it is a joke. Or she tries it once, a day or more
   later, and his next line says it or laughs. Two tries he lets pass: dropped, never tried again.
   A candidate that is nothing after CANDIDATE_DAYS is forgotten;
@@ -24,7 +24,7 @@ import json
 import re
 from dataclasses import asdict, dataclass, fields
 from datetime import date, datetime
-from typing import Any
+from typing import Any, Iterable
 
 from fish.memory.patterns import day_of
 from fish.memory.relationship import Relationship
@@ -132,8 +132,13 @@ class Ours:
 
     # --- a chat is over: sayings it may have made --------------------------------
 
-    def offer(self, named: list[dict[str, str]], episode_id: int, at: datetime) -> list[Joke]:
-        """The sayings the close of a chat named, through the gates; the ones kept, as candidates."""
+    def offer(self, named: list[dict[str, str]], episode_id: int, at: datetime,
+              known: Iterable[str] = ()) -> list[Joke]:
+        """The sayings the close of a chat named, through the gates; the ones kept, as candidates.
+        known: what she keeps another way (his nickname for her, a pinned fact): a saying found
+        in one of these is not a joke as well. The close was told so and named 胖鱼 all the same
+        (the 11-17 checkup)."""
+        known = list(known)
         his, hers = self.window.said_in(episode_id)
         jokes = self.today(at)
         new: list[Joke] = []
@@ -148,7 +153,7 @@ class Ours:
                 continue  # not said in this chat: made up at the close
             if words not in his and not LAUGH.search(his):
                 continue  # hers alone and he did not laugh: nothing of the two of them yet
-            if secret(words) or secret(origin):
+            if secret(words) or secret(origin) or any(words in k for k in known):
                 continue
             if any(j.words in words or words in j.words for j in jokes):
                 continue  # a joke she has, or one already dropped

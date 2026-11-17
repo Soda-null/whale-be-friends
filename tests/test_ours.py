@@ -86,6 +86,13 @@ def test_a_secret_everyday_words_and_a_joke_she_has_are_not_kept(ours):
     assert ours.offer([JOKE, {"words": "闹钟", "origin": "同一个", "who": "him"}], 5, T0) == []  # she has it
 
 
+def test_his_nickname_for_her_is_kept_as_a_fact_not_as_a_joke_too(ours):
+    chat(ours, [("user", "以后我叫你胖鱼吧 哈哈"), ("fish", "行吧")], T0)
+    nickname = {"words": "胖鱼", "origin": "他说我看着挺胖，以后就这么叫我", "who": "him"}
+    assert ours.offer([nickname], 1, T0, known=["他给我起的外号是胖鱼"]) == []
+    assert len(ours.offer([nickname], 1, T0)) == 1  # nothing says it is his name for her
+
+
 # --- a candidate becomes a joke, or is dropped ------------------------------------------------
 
 
@@ -241,6 +248,23 @@ def test_from_the_close_of_one_chat_to_the_prompt_of_the_next(tmp_path):
     assert (j.his, j.hers, j.hers_last) == (1, 1, "2027-01-11")
     brain.respond("明天闹钟要是再没响", "wechat", now=T0 + 2 * DAY + timedelta(minutes=1))
     assert "你们俩的梗" not in prompts[3]  # she just used it: it rests
+
+
+def test_the_close_naming_his_nickname_for_her_makes_no_joke(tmp_path):
+    conn = connect(tmp_path / "fish.db")
+    settings = Settings(api_key="t", base_url="", model="fake", db_path=tmp_path / "fish.db", window_size=20)
+
+    def answer(messages, json_mode):
+        if messages[0]["role"] == "system":
+            return chat_json("行吧")
+        return json.dumps({"summary": "他给我起了外号", "gist": "外号", "notes": [
+            {"text": "他给我起的外号是胖鱼", "kind": "fact", "about": "一辈子", "arousal": 0.6, "valence": 0.5, "tags": ["胖鱼"]}],
+            "ours": [{"words": "胖鱼", "origin": "他说我看着挺胖，以后就这么叫我", "who": "him"}, JOKE]}, ensure_ascii=False)
+
+    brain = Brain(conn, settings, FakeLLM(answer), persona_text="你是大肥鱼。")
+    brain.respond("以后我叫你胖鱼吧 哈哈 对了我那个叛徒闹钟又没响", "wechat", now=T0)
+    brain.respond("早", "wechat", now=T0 + DAY)  # the first chat is closed here
+    assert [j.words for j in brain.ours.all()] == ["叛徒闹钟"]
 
 
 def test_show_lists_their_jokes(tmp_path, capsys):

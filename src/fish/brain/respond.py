@@ -522,7 +522,7 @@ class Brain:
             if pact_id in shown:
                 self.store.settle(pact_id, state, now=at)
         if he_spoke:  # a saying the chat made theirs, for the memory to judge (decision 61)
-            self.ours.offer(closed.ours, ep.id, at)
+            self.ours.offer(closed.ours, ep.id, at, known=[m.text for m in self.store.profile() if m.pact])
         left = [m for m in self.store.alive() if m.source_episode == ep.id]
         self.episodes.set_keys(ep.id, keys_of(left + told))
         return self.episodes.close(ep.id, summary=closed.summary, gist=closed.gist,
