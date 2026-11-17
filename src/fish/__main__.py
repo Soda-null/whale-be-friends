@@ -32,8 +32,8 @@ from fish.config import REPO_ROOT, Settings, load_settings, owner_words
 from fish.cottage import Cottage
 from fish.brain.leisure import away, moment_line
 from fish.brain.leisure.book import where
-from fish.memory import (Diary, EpisodeManager, MemoryStore, Pastimes, PhaseStore, ProspectiveStore,
-                         Relationship, TraitStore)
+from fish.memory import (JOKE_STATES, Diary, EpisodeManager, MemoryStore, Ours, Pastimes, PhaseStore,
+                         ProspectiveStore, Relationship, TraitStore, Window)
 from fish.mood import MoodStore, stage_of
 from fish.routines import problems, run_browse, run_nightly
 from fish.routines.outside import run_outside
@@ -71,6 +71,9 @@ def show(conn: sqlite3.Connection, now: datetime | None = None) -> None:
     print("== 惦记 ==")
     for f in ProspectiveStore(conn).open():
         print(f"  [#{f.id}] {f.due}  {f.text}")
+    print("== 你们俩的梗 ==")  # decision 61; read only, a day's passing is not written here
+    for j in Ours(Relationship(conn), Window(conn, 1)).all():
+        print(f"  「{j.words}」 {JOKE_STATES[j.state]}  他说 {j.his} 回、她说 {j.hers} 回  {j.born}：{j.origin}")
     print("== 最近的聊天 ==")
     for ep in EpisodeManager(conn).recent(3):
         print(f"  {ep.started[:16]}  {ep.gist or ep.summary[:60] or '（无摘要）'}")

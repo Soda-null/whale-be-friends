@@ -25,6 +25,7 @@
 | `memory/relationship.py` | 关系账：认识天数、连续天数、**亲近值**按天涨（每轮 +0.3、开心 +1，但一天最多 +2，熟了以后 +1、很熟以后 +0.8；没聊的日子 −0.5；决定 17） | 能用 |
 | `brain/` | 所有模型调用都在这：`respond.py` 是接线员（节点化第 2 步）：问各节点要答案装成 `Situation` → 交给 `reply.py` → 记下这一轮（收尾旧情景、折叠也在这）；`reply.py` 是大脑本身，只认 `Situation`：拼提示词、问、读回复、查一下；`checker.py` 是检查员（决定 38）：她要发的话提到屋里的事，先对着小屋的完整记录查一遍，只删错的、或把错的几个字换成记录里的原话，改不了就原样发；`home_command.py` 把他对小屋说的大白话翻成放 / 拿（`fish home`，决定 36），照小屋的规则做；`prompt.py` 按 `prompts/*.md` 渲染；`budget.py` 字数预算；`parse.py` 读 JSON 回复；`llm.py`：`DeepSeekLLM`（JSON 模式）、`FakeLLM`、`CountingLLM`（数调用，体检用）；`closing.py` 他那句只是应一声或道别时贴在他那句后面的提醒、`gap.py` 上一句话隔了多久的提醒（决定 56，都只进提示词不存）、`comfort.py` 他难受时贴的提醒（决定 57） | 能用，寝室机上真跑着 |
 | `brain/meaning.py` | 按意思找记忆（决定 58）：`Meaning` 是一种 `Embedder`，字面和意思取高的；`load` 读 `data/models/bge-small-zh/` 里的小模型（ONNX，不用 torch），`embedder` 没模型就退回按字面。接线在 `respond.py` 建 `Recollector` 那一行 | 能用，`tests/test_meaning.py` |
+| `memory/ours.py` | 你们俩的梗（决定 61）：`Ours.offer` 收尾时把模型点的说法过关记成候选，`on_chatted` 数谁说了几回、判成没成（订 `Chatted`，接线在 `app.py`），`section` 是每轮提示词里"你们俩的梗"那一节（他说到的标★，对得上的递一个）；存在关系账的 `ours` 一栏，不调模型 | 能用，`tests/test_ours.py` |
 | `memory/old.py` | `old_things`：他一周前的、没写结果的事里她还想得起来的（决定 58）；`urges/him.py` 的 `old` 拿它当先开口的由头 | 能用，`tests/test_old_things.py` |
 | `channels/crossed.py` | 撞车的消息（决定 58）：`Crossing` 记她上一条气泡几点发出去，他这条发得更早就在前面加一句说明；`wechat.py` 里两行接线 | 能用，`tests/test_crossed.py` |
 | `cottage/hours.py` | 她的钟点（决定 59）：`bed_at` / `wake_at` / `meals` 每天由日期抽签，`asleep_hours`、`mealtime`、`woke`、`rested` 都从这算；屋子、先开口、夜里算劲头都问它 | 能用，`tests/test_drawn_days.py` |

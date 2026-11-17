@@ -129,6 +129,13 @@ class Window:
         return [r["text"] for r in self.conn.execute(
             "SELECT text FROM messages WHERE episode_id = ? AND role = 'user' ORDER BY id", (episode_id,))]
 
+    def days_he_said(self, words: str, before_episode: int) -> int:
+        """On how many different days before this chat he said these words (ours.py: what he
+        says all the time is no joke of theirs)."""
+        return self.conn.execute(
+            "SELECT COUNT(DISTINCT substr(ts, 1, 10)) FROM messages"
+            " WHERE role = 'user' AND episode_id < ? AND instr(text, ?) > 0", (before_episode, words)).fetchone()[0]
+
     def to_fold(self, episode_id: int) -> list[Turn]:
         """The oldest turns to summarize away, or [] while the episode still fits."""
         count = self.conn.execute(

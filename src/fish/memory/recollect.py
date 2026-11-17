@@ -17,6 +17,7 @@ from fish.memory.daychat import DayChat, day_chat
 from fish.memory.diary import Diary
 from fish.memory.episodes import Episode, EpisodeManager
 from fish.memory.longterm import Memory, MemoryStore
+from fish.memory.ours import Ours
 from fish.memory.pacts import asks_pact, triggered
 from fish.memory.pages import Page, asks_recall, may_answer, turn_back
 from fish.memory.patterns import arrival_line, asks_habit
@@ -49,6 +50,7 @@ class Recollection:
     diary: list[tuple[str, str]]
     phase: Phase
     day: DayChat  # today's chat (decision 32)
+    ours: str = ""  # their inside jokes his line says or fits, as she reads them (decision 61)
 
 
 class Recollector:
@@ -56,7 +58,8 @@ class Recollector:
 
     def __init__(self, conn: sqlite3.Connection, *, store: MemoryStore, prospective: ProspectiveStore,
                  episodes: EpisodeManager, window: Window, diary: Diary, phases: PhaseStore,
-                 relationship: Relationship, embedder: Embedder | None = None) -> None:
+                 relationship: Relationship, embedder: Embedder | None = None,
+                 ours: Ours | None = None) -> None:
         self.conn = conn
         self.embedder = embedder or BigramEmbedder()  # how a line finds a memory; the brain may hand in a better one
         self.store = store
@@ -66,6 +69,7 @@ class Recollector:
         self.diary = diary
         self.phases = phases
         self.relationship = relationship
+        self.ours = ours or Ours(relationship, window)
 
     def today_lines(self, now: datetime, profile: list[Memory], said: str = "", him: str = "他") -> str:
         """Dates, his birthday soon, what he planned for today and tomorrow, what he does on
@@ -106,4 +110,5 @@ class Recollector:
             seen=self.store.seen_recently(now, SEEN_DAYS)[:SEEN_SHOWN],
             howto=self.store.howto_card(), diary=self.diary.recent(DIARY_SHOWN),
             phase=self.phases.current(), day=day,
+            ours=self.ours.section(said, now, self.embedder, him),
         )

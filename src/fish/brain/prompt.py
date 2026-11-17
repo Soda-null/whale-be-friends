@@ -108,6 +108,7 @@ class Situation:
     pacts: list[Memory] = field(default_factory=list)  # promises between them still open
     stars: dict[int, str] = field(default_factory=dict)  # pact id -> the trigger his line said
     nothing_found: bool = False  # he asks if she remembers and nothing came back (memory v3 §14)
+    ours: str = ""  # their inside jokes his line says or fits (memory/ours.py, decision 61)
     pages: list[Page] = field(default_factory=list)  # old chats she looked back at (memory/pages.py)
     last_line: datetime | None = None  # when the last line of today's chat was said, his or hers (brain/gap.py)
     her_last: str = ""  # her line he is answering when this chat has none of hers yet: what she texted first
@@ -279,6 +280,7 @@ def build_chat_messages(ctx: Situation) -> list[dict[str, str]]:
     # not in front of her would only take the room of what she remembers (memory v3 §13).
     on = {name for name, there in (
         ("picture", ctx.user_image), ("shared", ctx.shared), ("pages", ctx.pages), ("pacts", ctx.pacts),
+        ("ours", ctx.ours),
         ("stickers", ctx.stickers), ("nostickers", not ctx.stickers and not ctx.face), ("cottage", ctx.cottage),
         ("him", ctx.him), ("face", ctx.face), ("phone", not ctx.face), ("phone_home", ctx.cottage and not ctx.face),
         ("town", not ctx.cottage), ("growth", ctx.growth), ("howto", ctx.howto), ("followups", ctx.followups),
@@ -295,6 +297,7 @@ def build_chat_messages(ctx: Situation) -> list[dict[str, str]]:
         home=render_home(ctx), him=ctx.him,
         shared=ctx.shared or "（没有）", today=ctx.today_section or "（没算）",
         pacts=render_pacts(ctx.pacts, ctx.stars), pages=render_pages(ctx.pages, ctx.now.date()),
+        ours=ctx.ours,
     )
     today = ctx.now.date()
     fixed = render(template, recalled="", followups="", earlier="", **fixed_fields)

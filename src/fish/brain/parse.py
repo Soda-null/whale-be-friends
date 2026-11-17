@@ -152,6 +152,7 @@ class EpisodeClose:
     outcomes: list[tuple[int, str]] = field(default_factory=list)  # (memory id, how it turned out)
     corrections: list[Correction] = field(default_factory=list)  # card facts this chat made untrue
     followups_done: list[int] = field(default_factory=list)  # follow-ups this chat already answered
+    ours: list[dict[str, str]] = field(default_factory=list)  # sayings the chat may have made theirs
     parsed: bool = True
 
 
@@ -331,7 +332,16 @@ def parse_episode_close(raw: str, fallback_summary: str) -> EpisodeClose:
         corrections=parse_corrections(data.get("corrections")),
         followups_done=[i for i in data.get("followups_done") or [] if isinstance(i, int)]
         if isinstance(data.get("followups_done"), list) else [],
+        ours=parse_ours(data.get("ours")),
     )
+
+
+def parse_ours(items) -> list[dict[str, str]]:
+    """[{"words": "叛徒闹钟", "origin": "他闹钟没响迟到，骂它是叛徒", "who": "him"}]: sayings the chat
+    may have made theirs. Whether one is kept is the memory's to say (memory/ours.py)."""
+    return [{k: str(item.get(k) or "").strip() for k in ("words", "origin", "who")}
+            for item in (items if isinstance(items, list) else [])
+            if isinstance(item, dict) and str(item.get("words") or "").strip()]
 
 
 def parse_corrections(items) -> list[Correction]:

@@ -33,7 +33,7 @@ from fish.cottage import Cottage, RoomNode, invented_act, leaving_words
 from fish.messages import Incoming, Outgoing, data_url, sniff_mime
 from fish.msgs import Chatted, HeSaid, HisStatus, SheSaid
 from fish.memory import (ABOUT_HIM_KINDS, FOLD_BATCH, PACT_LINK, Diary, Episode, EpisodeManager, Memory,
-                         MemoryStore, Moment, Pastimes, PhaseStore, ProspectiveStore, Recollector, Relationship,
+                         MemoryStore, Moment, Ours, Pastimes, PhaseStore, ProspectiveStore, Recollector, Relationship,
                          StickerAlbum, TraitStore, Window, asks_recall, echoes_her, his_line, keys_of, overlap,
                          promised_in_words)
 from fish.mood import Mood, MoodNode, MoodStore, stage_of
@@ -86,6 +86,7 @@ class Brain:
         self.phases = PhaseStore(conn)
         self.traits = TraitStore(conn)
         self.pastimes = Pastimes(conn)
+        self.ours = Ours(self.relationship, self.window)  # their inside jokes (decision 61)
         self.leisure: Leisure | None = None  # built on the first free moment; tests set their own
         # her lakeside cottage (decision 26), next to her database like her pictures; None when off
         self.cottage = Cottage(settings.db_path.parent / "cottage" / "now.json") if settings.cottage else None
@@ -93,7 +94,7 @@ class Brain:
         self.recollector = Recollector(conn, store=self.store, prospective=self.prospective,
                                        episodes=self.episodes, window=self.window, diary=self.diary,
                                        phases=self.phases, relationship=self.relationship,
-                                       embedder=embedder(settings.meaning_dir))
+                                       embedder=embedder(settings.meaning_dir), ours=self.ours)
         # the nodes that live on time (docs/nodes_design_zh.md step 3), wired in app.py
         self.bus = Bus()
         self.clock = Clock(self.bus)
@@ -107,7 +108,7 @@ class Brain:
         self.leisure_node = LeisureNode(self.free_time)
         self.mood_node = MoodNode(self.moods, kitchen=self.cottage is not None)
         wire(self.bus, room=self.room, mood=self.mood_node, reach=self.reach, leisure=self.leisure_node,
-             chat=self.keep_her_line)
+             chat=self.keep_her_line, ours=self.ours)
 
     # the model and the searcher belong to the brain proper; tests swap the model after building
     @property
@@ -251,7 +252,7 @@ class Brain:
             him=him.text, face=him.together,
             stickers=[] if him.together else self.album.offer(), user_image=data_url(image) if image else None,
             shared=shared, today_section=r.today, pacts=r.pacts, stars=r.stars,
-            pages=r.pages, nothing_found=r.nothing_found,
+            pages=r.pages, nothing_found=r.nothing_found, ours=r.ours,
         )
         return sit, shared_note
 
@@ -520,6 +521,8 @@ class Brain:
         for pact_id, state in (closed.pact_done if he_spoke else []):
             if pact_id in shown:
                 self.store.settle(pact_id, state, now=at)
+        if he_spoke:  # a saying the chat made theirs, for the memory to judge (decision 61)
+            self.ours.offer(closed.ours, ep.id, at)
         left = [m for m in self.store.alive() if m.source_episode == ep.id]
         self.episodes.set_keys(ep.id, keys_of(left + told))
         return self.episodes.close(ep.id, summary=closed.summary, gist=closed.gist,
