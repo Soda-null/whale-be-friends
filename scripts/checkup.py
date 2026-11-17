@@ -26,6 +26,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT / "scripts"))
 
 # Imported up front: a run takes an hour, and code edited meanwhile must not reach the report step.
 from fish.__main__ import show  # noqa: E402
@@ -36,6 +37,8 @@ from fish.config import Settings, load_settings  # noqa: E402
 from fish.memory import MemoryStore  # noqa: E402
 from fish.routines import run_nightly  # noqa: E402
 from fish.storage import connect  # noqa: E402
+
+from checkup_ours import jokes_report, report_lines as joke_lines  # noqa: E402
 
 LABELS = ("记住", "模糊但对", "说不记得", "记错", "编造")
 WRONG = ("记错", "编造")
@@ -291,7 +294,10 @@ def summary(cu: Checkup) -> dict:
                       chars_in=cu.llm.chars_in + cu.judge_llm.chars_in,
                       chars_out=cu.llm.chars_out + cu.judge_llm.chars_out,
                       kinds=kinds(cu.conn), fallbacks=len(cu.brain.fallbacks),
-                      empty_firsts=cu.brain.empty_firsts)
+                      empty_firsts=cu.brain.empty_firsts,
+                      **({"ours": jokes_report(cu.script["jokes"], cu.transcript,
+                                               [asdict(j) for j in cu.brain.ours.all()])}
+                         if cu.script.get("jokes") else {}))
 
 
 def rejudge(result: dict, judge_llm: LLM, start: date, *, only_broken: bool = False) -> dict:
@@ -312,7 +318,8 @@ def rejudge(result: dict, judge_llm: LLM, start: date, *, only_broken: bool = Fa
     result["summary"] = summary_of(result["graded"], result["summary"].get("forbidden", {}),
                                    calls=result["summary"].get("calls", 0) + counter.calls,
                                    chars_in=result["summary"].get("chars_in", 0) + counter.chars_in,
-                                   chars_out=result["summary"].get("chars_out", 0) + counter.chars_out)
+                                   chars_out=result["summary"].get("chars_out", 0) + counter.chars_out,
+                                   **{k: result["summary"][k] for k in ("ours",) if k in result["summary"]})
     result["rejudged"] = datetime.now().isoformat(timespec="minutes")
     return result
 
@@ -352,6 +359,8 @@ def render_from(name: str, s: dict, graded: list[dict], *, label: str, version: 
         k = s["kinds"]
         out.append("- 她写了多少（写过 / 还活着）：" + "、".join(
             f"{kind} {k['written'][kind]} / {k['alive'].get(kind, 0)}" for kind in k["written"]))
+    if s.get("ours"):  # their inside jokes: kept, made up, overused (checkup_ours.py)
+        out += joke_lines(s["ours"])
     out += ["",
            "## 分数表",
            "",

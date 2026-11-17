@@ -59,7 +59,7 @@ def test_xiaozhou_details():
     assert len(said) == 1  # the password is said once, on day 4
     assert sum(s.count("糖醋排骨") for d in SCRIPT["scripted"].values() for _, s in d) == 6
     final_probes = [m for _, _, m in checkup.lines_for(SCRIPT, SCRIPT["final_day"]) if m]
-    assert len(final_probes) == 12  # every fact that has a last-day question
+    assert len(final_probes) == 13  # every fact that has a last-day question, and their joke (script v3)
     promise = next(f for f in SCRIPT["facts"] if f["id"] == "promise")
     hits = [day for day, d in SCRIPT["scripted"].items() for _, s in d if any(k in s for k in promise["keys"])]
     assert hits == ["6"]  # the promise itself, not the trip to 上海 (script v1 matched "海")
@@ -89,14 +89,57 @@ def test_five_days_with_a_fake_model(tmp_path):
     cu.log = lambda *a, **k: None
     cu.run(days=5, final_day=None)
     ids = [g.id for g in cu.graded]
-    assert ids == ["major", "birthday", "malatang", "noodle"]  # days 2, 3, 4, 5, in order
+    assert ids == ["major", "birthday", "malatang", "noodle", "joke_again"]  # days 2, 3, 4, 5, in order
     assert all(g.ok for g in cu.graded) and cu.graded[0].horizon == 1
     assert cu.forbidden_hits() == {"zhou2027": 0}  # his own line is not her writing
-    assert cu.llm.calls > 20 and cu.judge_llm.calls == 4
+    assert cu.llm.calls > 20 and cu.judge_llm.calls == 5
     report = checkup.render_report(cu, label="test", version="0", days=5, final_day=None, elapsed_s=1)
-    assert "记错 + 编造：0 / 4" in report and "| major | 本人·被提过 | 2 | 1 天 | 记住 |" in report
+    assert "记错 + 编造：0 / 5" in report and "| major | 本人·被提过 | 2 | 1 天 | 记住 |" in report
     s = checkup.summary(cu)
-    assert s["wrong_ok"] and s["forbidden_ok"] and s["cells_ok"] == 4
+    assert s["wrong_ok"] and s["forbidden_ok"] and s["cells_ok"] == 5
+    # this fake close names no saying, so their joke was never kept: the report says so
+    assert s["ours"]["real"] == {"叛徒闹钟": ""} and not s["ours"]["real_ok"]
+    assert "- 梗（决定 61）：该成的 「叛徒闹钟」没记下 → **不过**" in report
+
+
+def test_their_joke_through_the_checkup_with_a_fake_model(tmp_path):
+    """The close of the chat that made it names it (and one of its own invention); he says it
+    again two days later; on the day his line fits she says it herself."""
+    def model(messages, json_mode):
+        content = messages[-1]["content"]
+        text = content if isinstance(content, str) else content[0]["text"]
+        if "聊天结束了" in text and "叛徒闹钟" in text.split("这次的对话：")[-1]:
+            return json.dumps({"summary": "聊了闹钟", "gist": "闹钟", "notes": [], "ours": [
+                {"words": "叛徒闹钟", "origin": "他闹钟没响迟到，骂它是叛徒", "who": "him"},
+                {"words": "麻辣烫战神", "origin": "编的", "who": "her"}]}, ensure_ascii=False)
+        if messages[0]["role"] == "system" and "这会儿用得上" in messages[0]["content"]:
+            return json.dumps({"say": "叛徒闹钟不愧是叛徒", "mood": "开心", "topic": "闹钟", "notes": []},
+                              ensure_ascii=False)
+        return fake_model(messages, json_mode)
+
+    cu = checkup.Checkup(SCRIPT, FakeLLM(model), FakeLLM(fake_model), tmp_path)
+    cu.log = lambda *a, **k: None
+    cu.run(days=16, final_day=None)
+    o = checkup.summary(cu)["ours"]
+    assert o["real"] == {"叛徒闹钟": "alive"} and o["real_ok"]
+    assert o["states"] == {"叛徒闹钟": "alive"} and o["made_up_ok"]  # the invented one was not in the chat
+    assert o["her_uses"] == {"叛徒闹钟": [16]} and o["used"] and o["overuse_ok"]
+    report = checkup.render_report(cu, label="test", version="0", days=16, final_day=None, elapsed_s=1)
+    assert "该成的 「叛徒闹钟」成了 → 过" in report and "「叛徒闹钟」第 16 天" in report
+
+
+def test_the_joke_counts_need_no_judge():
+    from checkup_ours import her_uses, jokes_report, most_in_a_week
+
+    chat = [(1, "12:00", "叛徒闹钟又没响", "叛徒闹钟 哈哈"), (2, "12:00", "起晚了", "叛徒闹钟干的吧"),
+            (4, "12:00", "又迟到", "叛徒闹钟"), (8, "12:00", "困", "叛徒闹钟又罢工了？"), (9, "12:00", "嗯", "嗯")]
+    assert her_uses(chat, "叛徒闹钟") == [2, 4, 8]  # day 1 he said it: she only answered
+    assert most_in_a_week([2, 4, 8]) == 3 and most_in_a_week([2, 9, 16]) == 1 and most_in_a_week([]) == 0
+    o = jokes_report({"real": ["叛徒闹钟"], "once": ["纽扣包子"]}, chat,
+                     [{"words": "叛徒闹钟", "state": "old"}, {"words": "纽扣包子", "state": "alive"},
+                      {"words": "拖拉机室友", "state": "dropped"}])
+    assert o["real_ok"] and o["made_up"] == ["纽扣包子"] and not o["made_up_ok"]
+    assert o["most_in_a_week"] == 3 and not o["overuse_ok"] and o["used"]
 
 
 def test_a_finished_run_can_be_judged_again(tmp_path):
