@@ -22,9 +22,14 @@ def home(tmp_path) -> Cottage:
     return c
 
 
-def test_a_nap_is_not_news_and_she_does_not_text_in_her_sleep(tmp_path):
+def test_a_nap_is_not_news_and_she_does_not_text_in_her_sleep(tmp_path, monkeypatch):
     """11-07 and 11-08: "睡了个午觉" was written as she lay down and was a reason to text him, so at
     15:00 she texted "醒了" while the room said she slept until 16:00."""
+    # The pause is a draw of 20-60 minutes, and this test looks at four moments only. About one
+    # run in twenty the thought planned at 15:01 fell on 15:59-16:01, the look at 15:59 found it
+    # "not yet" and put nothing off, and at 16:02 she texted: the test that failed once on 11-10
+    # and on GitHub on 11-17. A fixed pause keeps what is asked here: a nap puts the thought off.
+    monkeypatch.setattr("fish.brain.reach.THINK_PAUSE_MINUTES", (30, 30))
     conn = connect(tmp_path / "fish.db")
     s = Settings(api_key="t", base_url="", model="fake", db_path=tmp_path / "fish.db", cottage=True)
     asked = []
