@@ -6,5 +6,6 @@ from fish.cottage.node import RoomNode
 from fish.cottage.room import Change, Cottage, Offer, Room, invented_act
 from fish.cottage.hours import asleep_hours, rested, wake_at, woke
 from fish.cottage.rules import layout, summary
+from fish.cottage.view import view
 
-__all__ = ["Change", "Cottage", "Offer", "Room", "RoomNode", "leaving_words", "asleep_hours", "invented_act", "layout", "rested", "summary", "wake_at", "woke"]
+__all__ = ["Change", "Cottage", "Offer", "Room", "RoomNode", "leaving_words", "asleep_hours", "invented_act", "layout", "rested", "summary", "view", "wake_at", "woke"]

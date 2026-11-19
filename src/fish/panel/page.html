@@ -124,6 +124,13 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; font: 13px/1.75 ui-monospa
 .waiting { display: grid; place-items: center; gap: 8px; padding: 90px 0; color: var(--soft); }
 .waiting img { width: 88px; height: 88px; border-radius: 50%; animation: bob 2.2s ease-in-out infinite; }
 @keyframes bob { 50% { transform: translateY(-9px); } }
+.window-card { padding: 0; overflow: hidden; }
+.window-frame { background: var(--hair-soft); line-height: 0; }
+.cottage-picture { display: block; width: 100%; height: auto; }
+.cottage-picture text { font-family: "Yuanti SC", "PingFang SC", -apple-system, sans-serif; }
+.window-words { padding: 16px 22px 20px; }
+.window-now { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.window-today { margin-top: 10px; }
 @media (prefers-reduced-motion: reduce) { .waiting img { animation: none; } .do, nav button { transition: none; } }
 @media (max-width: 800px) {
   .columns { grid-template-columns: minmax(0, 1fr); }
@@ -143,6 +150,7 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; font: 13px/1.75 ui-monospa
   <div class="clock" id="clock"></div>
 </div></header>
 <main id="main"></main>
+<script src="/window.js"></script>
 <script>
 "use strict";
 const TOKEN = "__TOKEN__";
@@ -268,6 +276,14 @@ const views = {
           card("flower", "往屋里放点、拿点东西", chips, ...room.nodes, el("div", "note", "每次问一次模型，花一点点钱。")))));
   },
 
+  async window(quiet) {  // her cottage as a picture (decision 62; the drawing is window.js)
+    const reply = await api("/api/window");
+    if (current !== "window") return;
+    if (!reply.ok) return quiet ? null : showError(reply.error);
+    clock.textContent = reply.data.at ? `她那边 ${reply.data.at}` : "";
+    main.replaceChildren(window.drawCottage(reply.data, el));
+  },
+
   async memories() {
     const reply = await api("/api/memories");
     if (current !== "memories") return;
@@ -366,7 +382,7 @@ function drawMemories() {
       card("book", "最近聊过", d.chats.length ? list(d.chats.map(c => c.text)) : empty("还没有")))));
 }
 
-const tabs = [["today", "今天"], ["memories", "记忆"], ["machine", "机器"]];
+const tabs = [["today", "今天"], ["window", "小屋"], ["memories", "记忆"], ["machine", "机器"]];
 function drawTabs() {
   document.getElementById("tabs").replaceChildren(...tabs.map(([key, words]) => {
     const b = el("button", "round", words);
@@ -385,9 +401,11 @@ async function show(key) {
   await views[key]();
 }
 
-// Quietly bring "today" up to date, unless he is typing in it.
+// Quietly bring "today" (or the cottage window) up to date, unless he is typing in it.
 async function refresh() {
-  if (current !== "today" || document.hidden || busy) return;
+  if (document.hidden || busy) return;
+  if (current === "window") return views.window(true);
+  if (current !== "today") return;
   const typed = [...main.querySelectorAll("textarea")].some(t => t.value);
   const pending = main.querySelector("button.do:disabled");
   if (typed || pending) return;
@@ -398,7 +416,7 @@ async function refresh() {
 
 (async () => {
   const features = await api("/api/features");
-  if (features.ok && features.data.review) tabs.splice(2, 0, ["review", "复盘"]);
+  if (features.ok && features.data.review) tabs.splice(3, 0, ["review", "复盘"]);
   await show("today");
 })();
 setInterval(refresh, 60000);

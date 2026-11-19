@@ -32,10 +32,11 @@ BACKUP_TIMEOUT = 180
 BACKUP_NAME = re.compile(r"^(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})\d{2}$")
 NEXT_TIME = re.compile(r"\d{4}-(\d{2}-\d{2}) (\d{2}:\d{2})")
 PAGE = Path(__file__).with_name("page.html")
+WINDOW_JS = Path(__file__).with_name("window.js")  # the cottage window's drawing (decision 62)
 REPO = Path(__file__).resolve().parents[3]
 IMAGES = Path(__file__).with_name("img")
 IMAGE_PATH = re.compile(r"^/img/([a-z_]+\.webp)$")
-CSP = ("default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; img-src 'self'; "
+CSP = ("default-src 'none'; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self'; "
        "base-uri 'none'; form-action 'none'; frame-ancestors 'none'")
 UNREACHABLE = "连不上她那台机器。电脑是不是不在能连到它的网络上？"
 
@@ -74,6 +75,16 @@ class Panel:
         if not result.ok:
             raise Refused(result.err.splitlines()[-1] if result.err else UNREACHABLE)
         return result.out.split("== ", 1)[0].strip().splitlines()
+
+    def window(self) -> dict:
+        """Her room as a picture to draw (decision 62); `fish window` prints it as JSON."""
+        try:
+            data = json.loads(self._text(self.box.fish("window")))
+        except ValueError:
+            raise Refused("她那边的小屋没读懂，可能还没部署新版本") from None
+        if not isinstance(data, dict) or data.get("cottage") is False:
+            raise Refused("她没有小屋（FISH_COTTAGE 关着）")
+        return data
 
     def memories(self) -> dict:
         return parse.memories(self._text(self.box.fish("show")))
@@ -194,13 +205,15 @@ def make_server(box: Box, port: int = 0) -> ThreadingHTTPServer:
             image = IMAGE_PATH.match(url.path)
             if image and (IMAGES / image[1]).is_file():  # the same pictures the public README shows
                 return self._send(200, (IMAGES / image[1]).read_bytes(), "image/webp", "max-age=86400")
+            if url.path == "/window.js":
+                return self._send(200, WINDOW_JS.read_bytes(), "text/javascript; charset=utf-8")
             if url.path == "/api/ping":  # no token: says only that this is the panel
                 return self._json(200, {"app": "fish-panel"})
             if not self._allowed():
                 return self._json(403, {"ok": False})
             routes = {"/api/life": lambda: panel.life(_days(query, 5)), "/api/me": panel.me,
                       "/api/memories": panel.memories, "/api/review": lambda: panel.review(_days(query, 7)),
-                      "/api/machine": panel.machine,
+                      "/api/machine": panel.machine, "/api/window": panel.window,
                       "/api/features": lambda: {"review": (box.repo / "scripts" / "review.py").exists()}}
             if url.path not in routes:
                 return self._json(404, {"ok": False})

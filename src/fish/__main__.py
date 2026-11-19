@@ -1,4 +1,4 @@
-"""`python3 -m fish [chat | nightly | browse | life [天数] | show | stickers [folder] | cottage [put 东西 [顿数] | sill 东西] | wechat [login]]`.
+"""`python3 -m fish [chat | nightly | browse | life [天数] | show | window | stickers [folder] | cottage [put 东西 [顿数] | sill 东西] | wechat [login]]`.
 
 chat          talk to her in the terminal (default). Runs the nightly routine first if due.
 life          her day on one screen: what she is doing, her room, today, this stretch, the last
@@ -6,6 +6,7 @@ life          her day on one screen: what she is doing, her room, today, this st
 nightly       run the nightly routine now (safe to repeat: once per day).
 browse        make her browse now (by hand only: she browses in her free time when she likes, decision 24).
 show          print what she remembers: profile, memories, follow-ups, episodes, diary, mood.
+window        her room as the panel's window draws it (decision 62): one line of JSON, read only.
 stickers      give her the pictures in a folder (and whatever is in data/stickers/inbox/): she
               looks at each now, names it and keeps it. The folder's files are copied, not moved.
 home          his plain words for her room (decision 36): `home 往冰箱放两盒牛奶`, `home 把窗台上的小葱拿走`;
@@ -19,6 +20,7 @@ wechat        answer you on WeChat until Ctrl-C.
 from __future__ import annotations
 
 import argparse
+import json
 import sqlite3
 import sys
 from collections import Counter
@@ -29,7 +31,7 @@ from fish.brain import Brain, DeepSeekLLM, home_command
 from fish.channels import ILinkClient, SecondHer, TerminalChannel, WeChatChannel, WeChatState, hold_the_line, login
 from fish.channels.wechat import STATE_FILE
 from fish.config import REPO_ROOT, Settings, load_settings, owner_words
-from fish.cottage import Cottage
+from fish.cottage import Cottage, view
 from fish.brain.leisure import away, moment_line
 from fish.brain.leisure.book import where
 from fish.memory import (JOKE_STATES, Diary, EpisodeManager, MemoryStore, Ours, Pastimes, PhaseStore,
@@ -139,6 +141,22 @@ def life(conn: sqlite3.Connection, settings: Settings, days: int = 3, now: datet
         print(f"  {day}  {text}")
 
 
+def window(conn: sqlite3.Connection, settings: Settings, now: datetime | None = None) -> None:
+    """Her room as the panel's window draws it (decision 62): one line of JSON. Read only: the
+    service moves her room on; this only looks."""
+    now = now or datetime.now()
+    if not settings.cottage:
+        print(json.dumps({"cottage": False}))
+        return
+    try:
+        room = Cottage(settings.db_path.parent / "cottage" / "now.json").load(now)
+    except ValueError as e:
+        raise SystemExit(str(e))
+    mood = MoodStore.apply_clock(MoodStore(conn).load(), now, kitchen=True).describe()
+    weather = Relationship(conn).get("weather_line", "") or ""
+    print(json.dumps(view(room, now, weather=weather, mood=mood), ensure_ascii=False))
+
+
 def give_stickers(brain: Brain, folder: Path | None) -> None:
     inbox = inbox_of(brain)
     if folder is not None:
@@ -210,7 +228,7 @@ def me(settings: Settings, words: list[str]) -> None:
 def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(prog="fish", description="大肥鱼")
     ap.add_argument("command", nargs="?", choices=["chat", "nightly", "browse", "life", "show", "stickers", "cottage", "home",
-                                                   "me", "wechat"], default="chat")
+                                                   "me", "wechat", "window"], default="chat")
     ap.add_argument("subcommand", nargs="?", help="wechat: login; stickers: a folder of pictures; cottage: put / sill; life: how many diaries")
     ap.add_argument("rest", nargs="*", help="cottage put / sill: what")
     args = ap.parse_args(argv)
@@ -238,6 +256,9 @@ def main(argv: list[str] | None = None) -> None:
     conn = connect(settings.db_path)
     if args.command == "show":
         show(conn)
+        return
+    if args.command == "window":
+        window(conn, settings)
         return
     if args.command == "life":
         if args.subcommand is not None and not args.subcommand.isdigit():

@@ -118,6 +118,7 @@ def panel(tmp_path):
         "fish life": Result(True, LIFE), "fish show": Result(True, SHOW),
         "fish me": Result(True, "== 你的状态（她看到的就是这些）==\n  在哪：他不在\n  在干嘛：躺着\n"),
         "fish home": Result(True, "放好了两盒牛奶\n== 她的小屋（/home/x）==\n  冰箱满了\n"),
+        "fish window": Result(True, json.dumps({"at": "11-18 15:00", "her": {"spot": "stove", "doing": "做饭"}}, ensure_ascii=False)),
         "is-active": Result(True, "active\nThu 2026-11-05 03:30:00 CST\n/dev/x 100 50 15728640 80% /\n")})
     server = make_server(fake)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -258,3 +259,29 @@ def test_real_shell_keeps_his_words_whole(tmp_path):
     assert box.fish("me", nasty).out == nasty
     assert box.shell("true; echo $TZ").out.strip() == "Asia/Shanghai"  # for every command in the line
     assert not (tmp_path / "hacked").exists() and not (tmp_path / "hacked2").exists()
+
+
+def test_the_window_into_her_room_arrives_and_its_drawing_is_served(panel):
+    """Decision 62: the cottage window. Its data is `fish window`'s JSON, passed on as it is; its
+    drawing is window.js, served from here and nothing else outside the page."""
+    call, token, fake, _ = panel
+    reply = json.loads(call("GET", "/api/window", token=token)[1])
+    assert reply["ok"] and reply["data"]["her"]["spot"] == "stove"
+    assert call("GET", "/api/window")[0].status == 403  # no token
+    js_reply, js = call("GET", "/window.js")
+    assert js_reply.status == 200 and js_reply.getheader("Content-Type").startswith("text/javascript")
+    assert b"drawCottage" in js
+    page_reply, page = call("GET", "/")
+    assert "script-src 'self' 'unsafe-inline'" in page_reply.getheader("Content-Security-Policy")
+    assert b'<script src="/window.js"></script>' in page
+
+
+def test_a_window_answer_that_is_not_json_is_said_plainly(tmp_path):
+    from fish.panel.server import Panel, Refused
+
+    fake = FakeBox(tmp_path, answers={"fish window": Result(True, "usage: fish [chat | ...]\n")})
+    with pytest.raises(Refused, match="还没部署新版本"):
+        Panel(fake).window()
+    fake = FakeBox(tmp_path, answers={"fish window": Result(True, '{"cottage": false}')})
+    with pytest.raises(Refused, match="没有小屋"):
+        Panel(fake).window()

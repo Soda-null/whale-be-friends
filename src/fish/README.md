@@ -51,6 +51,7 @@
 | `memory/stickers.py` | 表情包相册：存图、起叫法、按用过次数排、记用过；同一张图按指纹只收一次；`offer` 每轮给她看常用的 12 张加随机换的其余，相册再大也轮得到没用过的 | 能用 |
 | `routines/stickers.py` | 送她表情包：`import_folder` 把一个文件夹的图拷进收件箱，`adopt_inbox` 一张张让她起叫法收下（`fish stickers` 当场全收，夜里一晚 10 张） | 能用 |
 | `panel/` | 本机网页面板（决定 54）：`box.py` 连她那台机器跑命令，`parse.py` 把命令输出变成页面要的数据，`server.py` 只听本机的小服务器，`page.html` 页面，`img/` 从 README 的两张图切的图；`python -m fish.panel` | 能用 |
+| `cottage/view.py` + `panel/window.js` | 小屋窗口（决定 62）：`view` 把屋子变成一张画要的数据（她站在哪、碗几个、花盆长到哪、天色和天气），只看不改；`fish window` 打成一行 JSON；`window.js` 在面板的"小屋"页用形状画出来，只有她的脸是图 | 能用，`tests/test_window.py` |
 | `__main__.py` | `python3 -m fish [chat \| nightly \| browse \| show \| stickers [文件夹] \| cottage [put 东西 \| sill 东西] \| wechat [login]]` | 能跑 |
 
 依赖方向：`channels → brain → {persona, memory, mood, world, cottage, urges} → storage`；`urges → {memory, mood}`；`routines → {memory, mood, brain, world}`；`world` 只用标准库。`brain/`、`memory/`、`mood/` 不许 import `channels/`（`tests/test_skeleton.py` 查）；`memory/` 里没有任何模型调用，所以它的测试不用密钥。
